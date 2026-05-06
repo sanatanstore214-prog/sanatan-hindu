@@ -1,8 +1,8 @@
-name: Check & Reply DMs
+name: Check and Reply DMs
 
 on:
   schedule:
-    # Har 2 ghante (free limit ke andar)
+    # Har 2 ghante
     - cron: '0 */2 * * *'
   workflow_dispatch:
 
@@ -10,33 +10,31 @@ jobs:
   dms:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Python setup
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install instagrapi==2.5.13 pycryptodomex pillow requests schedule python-dotenv pytrends
 
       - name: Restore Instagram session
         uses: actions/cache@v4
         with:
           path: ig_session.json
-          key: ig-session-${{ runner.os }}
+          key: ig-session-v1
           restore-keys: ig-session-
 
       - name: Create .env
         run: |
-          cat > .env << EOF
-          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-          IMGBB_API_KEY=${{ secrets.IMGBB_API_KEY }}
-          INSTAGRAM_USERNAME=${{ secrets.INSTAGRAM_USERNAME }}
-          INSTAGRAM_PASSWORD=${{ secrets.INSTAGRAM_PASSWORD }}
-          EOF
+          cat > .env << 'ENVEOF'
+          GEMINI_API_KEY=AIzaSyC-yL_CsfirmhdZIhvCav9YRQnD-Dr63Bs
+          IMGBB_API_KEY=b3c72931acbd147653d4b071f45175cd
+          INSTAGRAM_USERNAME=rahul_editzz214
+          INSTAGRAM_PASSWORD=Rahul@Nahipata72
+          ENVEOF
 
       - name: Check and reply DMs
         run: python main.py --check-dms
@@ -46,4 +44,4 @@ jobs:
         if: always()
         with:
           path: ig_session.json
-          key: ig-session-${{ runner.os }}
+          key: ig-session-v1
