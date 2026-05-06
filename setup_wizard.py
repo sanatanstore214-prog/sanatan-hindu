@@ -80,11 +80,11 @@ Optional:
     keys["GEMINI_API_KEY"] = ask("Gemini API Key paste karo (AIzaSy...)")
 
     # Instagram
-    print(f"\n{BOLD}--- Instagram Token ---{RESET}")
-    info("SETUP.md mein Step B dekho — Facebook Developer pe banani hogi")
-    warn("Instagram Business/Creator account hona chahiye")
-    keys["INSTAGRAM_ACCESS_TOKEN"] = ask("Instagram Access Token paste karo")
-    keys["INSTAGRAM_USER_ID"]      = ask("Instagram User ID paste karo (numbers only)")
+    print(f"\n{BOLD}--- Instagram Login ---{RESET}")
+    info("Bas apna Instagram username aur password — koi token nahi chahiye!")
+    warn("Note: Bot tumhare account se post karega — Business/Creator account best hai")
+    keys["INSTAGRAM_USERNAME"] = ask("Instagram username (@ ke bina, e.g. rahul_fitness)")
+    keys["INSTAGRAM_PASSWORD"] = ask("Instagram password")
 
     # ImgBB
     print(f"\n{BOLD}--- ImgBB Image Hosting ---{RESET}")
