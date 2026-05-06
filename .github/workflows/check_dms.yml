@@ -2,7 +2,6 @@ name: Check and Reply DMs
 
 on:
   schedule:
-    # Har 2 ghante
     - cron: '0 */2 * * *'
   workflow_dispatch:
 
@@ -15,7 +14,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install dependencies
         run: pip install instagrapi==2.5.13 pycryptodomex pillow requests schedule python-dotenv pytrends
@@ -29,12 +27,10 @@ jobs:
 
       - name: Create .env
         run: |
-          cat > .env << 'ENVEOF'
-          GEMINI_API_KEY=AIzaSyC-yL_CsfirmhdZIhvCav9YRQnD-Dr63Bs
-          IMGBB_API_KEY=b3c72931acbd147653d4b071f45175cd
-          INSTAGRAM_USERNAME=rahul_editzz214
-          INSTAGRAM_PASSWORD=Rahul@Nahipata72
-          ENVEOF
+          echo "GEMINI_API_KEY=AIzaSyC-yL_CsfirmhdZIhvCav9YRQnD-Dr63Bs" > .env
+          echo "IMGBB_API_KEY=b3c72931acbd147653d4b071f45175cd" >> .env
+          echo "INSTAGRAM_USERNAME=rahul_editzz214" >> .env
+          echo "INSTAGRAM_PASSWORD=Rahul@Nahipata72" >> .env
 
       - name: Check and reply DMs
         run: python main.py --check-dms

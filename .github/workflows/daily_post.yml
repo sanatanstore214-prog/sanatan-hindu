@@ -2,7 +2,6 @@ name: Daily Instagram Post
 
 on:
   schedule:
-    # 8:00 AM IST = 2:30 AM UTC
     - cron: '30 2 * * *'
   workflow_dispatch:
 
@@ -15,7 +14,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install dependencies
         run: pip install instagrapi==2.5.13 pycryptodomex pillow requests schedule python-dotenv pytrends
@@ -29,13 +27,12 @@ jobs:
 
       - name: Create .env
         run: |
-          cat > .env << 'ENVEOF'
-          GEMINI_API_KEY=AIzaSyC-yL_CsfirmhdZIhvCav9YRQnD-Dr63Bs
-          IMGBB_API_KEY=b3c72931acbd147653d4b071f45175cd
-          INSTAGRAM_USERNAME=rahul_editzz214
-          INSTAGRAM_PASSWORD=Rahul@Nahipata72
-          POST_TIME=08:00
-          ENVEOF
+          echo "GEMINI_API_KEY=AIzaSyC-yL_CsfirmhdZIhvCav9YRQnD-Dr63Bs" > .env
+          echo "IMGBB_API_KEY=b3c72931acbd147653d4b071f45175cd" >> .env
+          echo "INSTAGRAM_USERNAME=rahul_editzz214" >> .env
+          echo "INSTAGRAM_PASSWORD=Rahul@Nahipata72" >> .env
+          echo "POST_TIME=08:00" >> .env
+          cat .env
 
       - name: Run daily post
         run: python main.py --run-now
