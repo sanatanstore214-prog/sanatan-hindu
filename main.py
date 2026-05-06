@@ -22,7 +22,7 @@ import schedule
 from datetime import datetime
 from config import (
     POST_TIME, CLIENT_HUNT_TIME_1, CLIENT_HUNT_TIME_2,
-    DM_CHECK_INTERVAL_MINUTES, ANTHROPIC_API_KEY,
+    DM_CHECK_INTERVAL_MINUTES, GEMINI_API_KEY,
     INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_USER_ID, IMGBB_API_KEY,
 )
 from agents.trend_agent import TrendAgent
@@ -43,8 +43,8 @@ _last_content = None
 def validate_config():
     """Startup pe config check karo."""
     missing = []
-    if not ANTHROPIC_API_KEY:
-        missing.append("ANTHROPIC_API_KEY")
+    if not GEMINI_API_KEY:
+        missing.append("GEMINI_API_KEY")
     if not INSTAGRAM_ACCESS_TOKEN:
         missing.append("INSTAGRAM_ACCESS_TOKEN")
     if not INSTAGRAM_USER_ID:

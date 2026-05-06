@@ -73,10 +73,11 @@ Optional:
 
     keys = {}
 
-    # Anthropic
-    print(f"{BOLD}--- Claude AI Key ---{RESET}")
-    info("https://console.anthropic.com → Sign up → API Keys → Create Key")
-    keys["ANTHROPIC_API_KEY"] = ask("Claude API Key paste karo (sk-ant-...)")
+    # Gemini (FREE)
+    print(f"{BOLD}--- Google Gemini Key (FREE) ---{RESET}")
+    info("https://aistudio.google.com/apikey → Google se login karo → 'Get API Key' → Create")
+    ok("Bilkul free hai — koi credit card nahi chahiye!")
+    keys["GEMINI_API_KEY"] = ask("Gemini API Key paste karo (AIzaSy...)")
 
     # Instagram
     print(f"\n{BOLD}--- Instagram Token ---{RESET}")

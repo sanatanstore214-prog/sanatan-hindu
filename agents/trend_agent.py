@@ -2,9 +2,9 @@ import json
 import random
 import requests
 from typing import Optional
-import anthropic
-from config import ANTHROPIC_API_KEY, CLAUDE_MODEL, HEALTH_KEYWORDS
+from config import GEMINI_API_KEY, GEMINI_MODEL, HEALTH_KEYWORDS
 from prompts.system_prompts import TREND_RESEARCHER_PROMPT
+from utils.ai_client import GeminiClient
 from utils.logger import get_logger
 
 logger = get_logger("TrendAgent")
@@ -12,7 +12,7 @@ logger = get_logger("TrendAgent")
 
 class TrendAgent:
     def __init__(self):
-        self.client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        self.client = GeminiClient(api_key=GEMINI_API_KEY)
 
     def _fetch_amazon_bestsellers(self) -> str:
         """Fetch Amazon India health bestsellers RSS feed."""
@@ -63,8 +63,8 @@ Upar diye data ke basis pe, aaj ke liye BEST ek health/fitness product select ka
 4. Indians ke common problems solve karta hai (weight, protein, energy, etc.)
 """
         try:
-            response = self.client.messages.create(
-                model=CLAUDE_MODEL,
+            response = self.client.messages_create(
+                model=GEMINI_MODEL,
                 max_tokens=800,
                 system=TREND_RESEARCHER_PROMPT,
                 messages=[{"role": "user", "content": context}],

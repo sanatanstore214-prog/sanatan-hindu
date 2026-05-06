@@ -1,9 +1,9 @@
 import json
 import random
-import anthropic
 from typing import Optional
-from config import ANTHROPIC_API_KEY, CLAUDE_MODEL, MAX_DMS_PER_DAY, MAX_CLIENTS_PER_SEARCH
+from config import GEMINI_API_KEY, GEMINI_MODEL, MAX_DMS_PER_DAY, MAX_CLIENTS_PER_SEARCH
 from prompts.system_prompts import CLIENT_FINDER_PROMPT, DM_OPENER_TEMPLATE
+from utils.ai_client import GeminiClient
 from utils.logger import get_logger
 
 logger = get_logger("ClientFinder")
@@ -19,7 +19,7 @@ TARGET_HASHTAGS = [
 class ClientFinder:
     def __init__(self, instagram_agent):
         self.ig = instagram_agent
-        self.client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        self.client = GeminiClient(api_key=GEMINI_API_KEY)
         self._dms_sent_today = 0
 
     def _can_send_more_dms(self) -> bool:
@@ -53,8 +53,8 @@ Sirf unhe select karo jo genuinely help chahte hain ya products mein interested 
 Max {MAX_CLIENTS_PER_SEARCH} log select karo.
 """
         try:
-            response = self.client.messages.create(
-                model=CLAUDE_MODEL,
+            response = self.client.messages_create(
+                model=GEMINI_MODEL,
                 max_tokens=800,
                 system=CLIENT_FINDER_PROMPT,
                 messages=[{"role": "user", "content": prompt}],

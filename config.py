@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API Keys
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
 INSTAGRAM_USER_ID = os.getenv("INSTAGRAM_USER_ID", "")
 IMGBB_API_KEY = os.getenv("IMGBB_API_KEY", "")
@@ -16,8 +16,8 @@ CLIENT_HUNT_TIME_1 = os.getenv("CLIENT_HUNT_TIME_1", "12:00")
 CLIENT_HUNT_TIME_2 = os.getenv("CLIENT_HUNT_TIME_2", "18:00")
 DM_CHECK_INTERVAL_MINUTES = 30
 
-# Claude model
-CLAUDE_MODEL = "claude-sonnet-4-6"
+# Gemini model (free tier)
+GEMINI_MODEL = "gemini-1.5-flash"
 
 # Daily limits (Instagram spam prevention)
 MAX_DMS_PER_DAY = 10

@@ -1,9 +1,9 @@
 import json
 import time
-import anthropic
 from typing import Optional
-from config import ANTHROPIC_API_KEY, CLAUDE_MODEL, DM_CHECK_INTERVAL_MINUTES
+from config import GEMINI_API_KEY, GEMINI_MODEL, DM_CHECK_INTERVAL_MINUTES
 from prompts.system_prompts import DM_HANDLER_PROMPT
+from utils.ai_client import GeminiClient
 from utils.logger import get_logger
 
 logger = get_logger("DMHandler")
@@ -12,7 +12,7 @@ logger = get_logger("DMHandler")
 class DMHandler:
     def __init__(self, instagram_agent, product_context: Optional[dict] = None):
         self.ig = instagram_agent
-        self.client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        self.client = GeminiClient(api_key=GEMINI_API_KEY)
         self.conversation_history: dict[str, list] = {}
         self.processed_message_ids: set = set()
         self.product_context = product_context or {}
@@ -45,8 +45,8 @@ class DMHandler:
         })
 
         try:
-            response = self.client.messages.create(
-                model=CLAUDE_MODEL,
+            response = self.client.messages_create(
+                model=GEMINI_MODEL,
                 max_tokens=400,
                 system=DM_HANDLER_PROMPT,
                 messages=messages,

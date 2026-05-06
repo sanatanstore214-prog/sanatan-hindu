@@ -1,9 +1,9 @@
 import json
 import random
-import anthropic
 from typing import Optional
-from config import ANTHROPIC_API_KEY, CLAUDE_MODEL, BASE_HASHTAGS, AMAZON_AFFILIATE_TAG
+from config import GEMINI_API_KEY, GEMINI_MODEL, BASE_HASHTAGS, AMAZON_AFFILIATE_TAG
 from prompts.system_prompts import CONTENT_CREATOR_PROMPT
+from utils.ai_client import GeminiClient
 from utils.logger import get_logger
 
 logger = get_logger("ContentAgent")
@@ -11,7 +11,7 @@ logger = get_logger("ContentAgent")
 
 class ContentAgent:
     def __init__(self):
-        self.client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        self.client = GeminiClient(api_key=GEMINI_API_KEY)
 
     def _build_affiliate_url(self, keyword: str) -> str:
         """Amazon affiliate search URL banao."""
@@ -42,8 +42,8 @@ Inke basis pe Instagram post ke liye content create karo.
 Caption mein end pe "👇 Link bio mein hai!" zaroor likhna.
 """
         try:
-            response = self.client.messages.create(
-                model=CLAUDE_MODEL,
+            response = self.client.messages_create(
+                model=GEMINI_MODEL,
                 max_tokens=1000,
                 system=CONTENT_CREATOR_PROMPT,
                 messages=[{"role": "user", "content": prompt}],
