@@ -21,11 +21,13 @@ Ab `.env` file open karo aur apni values bhari karo (neeche explained hai).
 
 ## Step 3: API Keys Kahan Se Milenge
 
-### A) Anthropic API Key (Claude AI)
-1. https://console.anthropic.com pe jao
-2. Sign up / Login karo
-3. "API Keys" section mein "Create Key" karo
-4. Copy karo aur `.env` mein `ANTHROPIC_API_KEY=sk-ant-...` paste karo
+### A) Google Gemini API Key — BILKUL FREE!
+1. https://aistudio.google.com/app/apikey pe jao
+2. Google account se login karo (Gmail wala)
+3. "Create API Key" button dabao
+4. Copy karo aur `.env` mein `GEMINI_API_KEY=AIzaSy...` paste karo
+
+> **Free limit:** 15 requests/minute, 1 million tokens/day — daily bot ke liye kaafi hai!
 
 ---
 
@@ -177,7 +179,7 @@ sudo systemctl status instagram-bot
 ## Troubleshooting
 
 **"Missing .env variables" error:**
-→ `.env` file check karo, koi value missing nahi honi chahiye
+→ `.env` file check karo, `GEMINI_API_KEY` zaroor honi chahiye
 
 **"Media container error":**
 → Instagram account Business/Creator hai confirm karo

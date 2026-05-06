@@ -1,20 +1,16 @@
 import json
 import random
-import anthropic
 from typing import Optional
-from config import ANTHROPIC_API_KEY, CLAUDE_MODEL, BASE_HASHTAGS, AMAZON_AFFILIATE_TAG
+from config import BASE_HASHTAGS, AMAZON_AFFILIATE_TAG
 from prompts.system_prompts import CONTENT_CREATOR_PROMPT
+from utils.gemini_client import generate
 from utils.logger import get_logger
 
 logger = get_logger("ContentAgent")
 
 
 class ContentAgent:
-    def __init__(self):
-        self.client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-
     def _build_affiliate_url(self, keyword: str) -> str:
-        """Amazon affiliate search URL banao."""
         encoded = keyword.replace(" ", "+")
         base = f"https://www.amazon.in/s?k={encoded}"
         if AMAZON_AFFILIATE_TAG:
@@ -22,9 +18,7 @@ class ContentAgent:
         return base
 
     def generate_content(self, product: dict) -> Optional[dict]:
-        """Claude se Hinglish caption, hashtags aur story text generate karo."""
         logger.info(f"Content generate kar raha hoon: {product.get('product_name')}")
-
         affiliate_url = self._build_affiliate_url(product.get("affiliate_keyword", product["product_name"]))
 
         prompt = f"""
@@ -42,18 +36,11 @@ Inke basis pe Instagram post ke liye content create karo.
 Caption mein end pe "👇 Link bio mein hai!" zaroor likhna.
 """
         try:
-            response = self.client.messages.create(
-                model=CLAUDE_MODEL,
-                max_tokens=1000,
-                system=CONTENT_CREATOR_PROMPT,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            raw = response.content[0].text.strip()
+            raw = generate(CONTENT_CREATOR_PROMPT, prompt, max_tokens=1000)
             start = raw.find("{")
             end = raw.rfind("}") + 1
             content = json.loads(raw[start:end])
 
-            # Ensure we have exactly 30 hashtags, pad if needed
             existing_tags = content.get("hashtags", "").split()
             if len(existing_tags) < 30:
                 extra = random.sample(BASE_HASHTAGS, 30 - len(existing_tags))

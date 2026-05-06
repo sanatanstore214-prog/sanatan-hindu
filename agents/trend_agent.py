@@ -2,32 +2,26 @@ import json
 import random
 import requests
 from typing import Optional
-import anthropic
-from config import ANTHROPIC_API_KEY, CLAUDE_MODEL, HEALTH_KEYWORDS
+from config import HEALTH_KEYWORDS
 from prompts.system_prompts import TREND_RESEARCHER_PROMPT
+from utils.gemini_client import generate
 from utils.logger import get_logger
 
 logger = get_logger("TrendAgent")
 
 
 class TrendAgent:
-    def __init__(self):
-        self.client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-
     def _fetch_amazon_bestsellers(self) -> str:
-        """Fetch Amazon India health bestsellers RSS feed."""
         rss_url = "https://www.amazon.in/gp/rss/bestsellers/hpc/ref=zg_bs_hpc_rsslink"
         try:
             resp = requests.get(rss_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
             if resp.status_code == 200:
-                text = resp.text[:3000]
-                return f"Amazon India Health Bestsellers RSS:\n{text}"
+                return f"Amazon India Health Bestsellers RSS:\n{resp.text[:3000]}"
         except Exception as e:
             logger.warning(f"Amazon RSS fetch failed: {e}")
         return ""
 
     def _fetch_google_trends_summary(self) -> str:
-        """Get trending health searches using pytrends."""
         try:
             from pytrends.request import TrendReq
             pt = TrendReq(hl="en-IN", tz=330, timeout=(10, 25))
@@ -43,9 +37,7 @@ class TrendAgent:
         return f"Focus on popular Indian health keyword: {random.choice(HEALTH_KEYWORDS)}"
 
     def find_trending_product(self) -> Optional[dict]:
-        """Main method: find today's best product to promote."""
         logger.info("Trending product dhundh raha hoon...")
-
         amazon_data = self._fetch_amazon_bestsellers()
         trends_data = self._fetch_google_trends_summary()
 
@@ -63,14 +55,7 @@ Upar diye data ke basis pe, aaj ke liye BEST ek health/fitness product select ka
 4. Indians ke common problems solve karta hai (weight, protein, energy, etc.)
 """
         try:
-            response = self.client.messages.create(
-                model=CLAUDE_MODEL,
-                max_tokens=800,
-                system=TREND_RESEARCHER_PROMPT,
-                messages=[{"role": "user", "content": context}],
-            )
-            raw = response.content[0].text.strip()
-            # Extract JSON from response
+            raw = generate(TREND_RESEARCHER_PROMPT, context, max_tokens=800)
             start = raw.find("{")
             end = raw.rfind("}") + 1
             product = json.loads(raw[start:end])
@@ -81,7 +66,6 @@ Upar diye data ke basis pe, aaj ke liye BEST ek health/fitness product select ka
             return self._fallback_product()
 
     def _fallback_product(self) -> dict:
-        """Fallback agar API ya internet fail ho."""
         return {
             "product_name": "Whey Protein Isolate",
             "brand": "MuscleBlaze",
