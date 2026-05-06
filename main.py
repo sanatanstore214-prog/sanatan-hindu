@@ -23,7 +23,7 @@ from datetime import datetime
 from config import (
     POST_TIME, CLIENT_HUNT_TIME_1, CLIENT_HUNT_TIME_2,
     DM_CHECK_INTERVAL_MINUTES, GEMINI_API_KEY,
-    INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_USER_ID, IMGBB_API_KEY,
+    INSTAGRAM_USERNAME, INSTAGRAM_PASSWORD, IMGBB_API_KEY,
 )
 from agents.trend_agent import TrendAgent
 from agents.content_agent import ContentAgent
@@ -45,15 +45,15 @@ def validate_config():
     missing = []
     if not GEMINI_API_KEY:
         missing.append("GEMINI_API_KEY")
-    if not INSTAGRAM_ACCESS_TOKEN:
-        missing.append("INSTAGRAM_ACCESS_TOKEN")
-    if not INSTAGRAM_USER_ID:
-        missing.append("INSTAGRAM_USER_ID")
+    if not INSTAGRAM_USERNAME:
+        missing.append("INSTAGRAM_USERNAME")
+    if not INSTAGRAM_PASSWORD:
+        missing.append("INSTAGRAM_PASSWORD")
     if not IMGBB_API_KEY:
         missing.append("IMGBB_API_KEY")
     if missing:
         logger.error(f"Missing .env variables: {', '.join(missing)}")
-        logger.error("SETUP.md dekho — Instagram API setup ke liye")
+        logger.error(".env file mein apna Instagram username aur password daalo")
         sys.exit(1)
 
 

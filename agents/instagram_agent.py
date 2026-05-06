@@ -1,166 +1,146 @@
 import time
 import base64
 import requests
+from pathlib import Path
 from typing import Optional
-from config import INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_USER_ID, IMGBB_API_KEY, IG_API_BASE
+from instagrapi import Client
+from instagrapi.exceptions import LoginRequired, ChallengeRequired, TwoFactorRequired
+from config import INSTAGRAM_USERNAME, INSTAGRAM_PASSWORD, IMGBB_API_KEY
 from utils.logger import get_logger
 
 logger = get_logger("InstagramAgent")
 
+SESSION_FILE = Path("ig_session.json")
+
 
 class InstagramAgent:
     def __init__(self):
-        self.token = INSTAGRAM_ACCESS_TOKEN
-        self.user_id = INSTAGRAM_USER_ID
-        self.base = IG_API_BASE
+        self.cl = Client()
+        self.cl.delay_range = [2, 5]  # Random delay between actions (anti-spam)
+        self._logged_in = False
 
-    def _upload_image_to_imgbb(self, image_path: str) -> Optional[str]:
-        """ImgBB pe image upload karo aur public URL lo."""
+    def login(self) -> bool:
+        """Login to Instagram — session reuse karo agar possible ho."""
+        if SESSION_FILE.exists():
+            try:
+                self.cl.load_settings(SESSION_FILE)
+                self.cl.login(INSTAGRAM_USERNAME, INSTAGRAM_PASSWORD)
+                self.cl.get_timeline_feed()  # Session valid hai ya nahi check karo
+                logger.info("Session se login successful")
+                self._logged_in = True
+                return True
+            except Exception:
+                logger.warning("Saved session expire ho gayi, fresh login kar raha hoon...")
+
+        try:
+            self.cl.login(INSTAGRAM_USERNAME, INSTAGRAM_PASSWORD)
+            self.cl.dump_settings(SESSION_FILE)
+            logger.info("Fresh login successful, session save ho gayi")
+            self._logged_in = True
+            return True
+        except TwoFactorRequired:
+            logger.error("2FA enabled hai — Instagram mein 2FA band karo ya app password use karo")
+            return False
+        except ChallengeRequired:
+            logger.error("Instagram ne challenge diya — kuch der baad try karo")
+            return False
+        except Exception as e:
+            logger.error(f"Login fail: {e}")
+            return False
+
+    def _ensure_logged_in(self):
+        if not self._logged_in:
+            if not self.login():
+                raise RuntimeError("Instagram login fail hua")
+
+    def _upload_to_imgbb(self, image_path: str) -> Optional[str]:
+        """ImgBB pe image upload karo (Instagram ko URL chahiye)."""
         if not IMGBB_API_KEY:
-            raise ValueError("IMGBB_API_KEY .env mein set nahi hai!")
+            return None
         with open(image_path, "rb") as f:
-            image_data = base64.b64encode(f.read()).decode("utf-8")
+            img_b64 = base64.b64encode(f.read()).decode("utf-8")
         resp = requests.post(
             "https://api.imgbb.com/1/upload",
-            data={"key": IMGBB_API_KEY, "image": image_data},
+            data={"key": IMGBB_API_KEY, "image": img_b64},
             timeout=30,
         )
-        resp.raise_for_status()
-        url = resp.json()["data"]["url"]
-        logger.info(f"Image hosted at: {url}")
-        return url
-
-    def _create_media_container(self, image_url: str, caption: str) -> Optional[str]:
-        """Instagram Graph API se media container banao."""
-        url = f"{self.base}/{self.user_id}/media"
-        payload = {
-            "image_url": image_url,
-            "caption": caption,
-            "access_token": self.token,
-        }
-        resp = requests.post(url, data=payload, timeout=30)
-        data = resp.json()
-        if "id" not in data:
-            logger.error(f"Media container error: {data}")
-            return None
-        container_id = data["id"]
-        logger.info(f"Media container created: {container_id}")
-        return container_id
-
-    def _wait_for_container_ready(self, container_id: str, max_wait: int = 60):
-        """Container ke ready hone ka wait karo."""
-        url = f"{self.base}/{container_id}"
-        params = {"fields": "status_code", "access_token": self.token}
-        for _ in range(max_wait // 5):
-            resp = requests.get(url, params=params, timeout=15)
-            status = resp.json().get("status_code", "")
-            if status == "FINISHED":
-                return True
-            if status == "ERROR":
-                logger.error(f"Container failed: {resp.json()}")
-                return False
-            time.sleep(5)
-        return False
-
-    def _publish_container(self, container_id: str) -> Optional[str]:
-        """Container ko publish karo Instagram pe."""
-        url = f"{self.base}/{self.user_id}/media_publish"
-        payload = {"creation_id": container_id, "access_token": self.token}
-        resp = requests.post(url, data=payload, timeout=30)
-        data = resp.json()
-        if "id" not in data:
-            logger.error(f"Publish error: {data}")
-            return None
-        post_id = data["id"]
-        logger.info(f"Post published! ID: {post_id}")
-        return post_id
+        if resp.status_code == 200:
+            return resp.json()["data"]["url"]
+        return None
 
     def post_image(self, image_path: str, caption: str, hashtags: str) -> Optional[str]:
-        """Full workflow: image upload → container → publish."""
-        full_caption = f"{caption}\n\n{hashtags}"
-        logger.info("Instagram post shuru kar raha hoon...")
+        """Instagram pe photo post karo."""
+        self._ensure_logged_in()
+        full_caption = f"{caption}\n\n.\n.\n.\n{hashtags}"
         try:
-            image_url = self._upload_image_to_imgbb(image_path)
-            container_id = self._create_media_container(image_url, full_caption)
-            if not container_id:
-                return None
-            ready = self._wait_for_container_ready(container_id)
-            if not ready:
-                logger.error("Container ready nahi hua")
-                return None
-            post_id = self._publish_container(container_id)
+            media = self.cl.photo_upload(image_path, caption=full_caption)
+            post_id = str(media.id)
+            logger.info(f"Post successful! Media ID: {post_id}")
             return post_id
+        except LoginRequired:
+            logger.warning("Session expire, re-login kar raha hoon...")
+            self._logged_in = False
+            self._ensure_logged_in()
+            media = self.cl.photo_upload(image_path, caption=full_caption)
+            return str(media.id)
         except Exception as e:
-            logger.error(f"Post fail hua: {e}")
+            logger.error(f"Post fail: {e}")
             return None
 
     def get_recent_messages(self) -> list:
-        """Recent DMs fetch karo (Instagram Messaging API)."""
-        url = f"{self.base}/{self.user_id}/conversations"
-        params = {
-            "fields": "messages{message,from,created_time,id}",
-            "access_token": self.token,
-            "platform": "instagram",
-        }
+        """Inbox se recent DMs fetch karo."""
+        self._ensure_logged_in()
+        messages = []
         try:
-            resp = requests.get(url, params=params, timeout=15)
-            data = resp.json()
-            conversations = data.get("data", [])
-            messages = []
-            for conv in conversations:
-                for msg in conv.get("messages", {}).get("data", []):
-                    messages.append({
-                        "id": msg.get("id"),
-                        "text": msg.get("message", ""),
-                        "from_id": msg.get("from", {}).get("id"),
-                        "from_name": msg.get("from", {}).get("name", ""),
-                        "time": msg.get("created_time"),
-                    })
-            return messages
+            threads = self.cl.direct_threads(amount=20)
+            for thread in threads:
+                for msg in thread.messages[:3]:  # Last 3 messages per thread
+                    if msg.item_type == "text":
+                        messages.append({
+                            "id": str(msg.id),
+                            "text": msg.text or "",
+                            "from_id": str(msg.user_id),
+                            "thread_id": str(thread.id),
+                        })
         except Exception as e:
-            logger.error(f"Messages fetch fail: {e}")
-            return []
+            logger.error(f"DM fetch fail: {e}")
+        return messages
 
-    def send_dm(self, recipient_id: str, message: str) -> bool:
+    def send_dm(self, recipient_id: str, message: str, thread_id: Optional[str] = None) -> bool:
         """Kisi ko DM bhejo."""
-        url = f"{self.base}/{self.user_id}/messages"
-        payload = {
-            "recipient": {"id": recipient_id},
-            "message": {"text": message},
-            "access_token": self.token,
-        }
+        self._ensure_logged_in()
         try:
-            resp = requests.post(url, json=payload, timeout=15)
-            if resp.status_code == 200:
-                logger.info(f"DM sent to {recipient_id}")
-                return True
-            logger.error(f"DM fail: {resp.json()}")
-            return False
+            if thread_id:
+                self.cl.direct_send(message, thread_ids=[thread_id])
+            else:
+                self.cl.direct_send(message, user_ids=[int(recipient_id)])
+            logger.info(f"DM sent to {recipient_id}")
+            time.sleep(2)
+            return True
         except Exception as e:
-            logger.error(f"DM exception: {e}")
+            logger.error(f"DM fail to {recipient_id}: {e}")
             return False
 
     def search_hashtag_media(self, hashtag: str, limit: int = 20) -> list:
-        """Hashtag se recent posts dhundho (client finding ke liye)."""
+        """Hashtag se recent posts dhundho."""
+        self._ensure_logged_in()
         try:
-            # Step 1: hashtag ID lo
-            search_url = f"{self.base}/ig_hashtag_search"
-            params = {"user_id": self.user_id, "q": hashtag.lstrip("#"), "access_token": self.token}
-            resp = requests.get(search_url, params=params, timeout=15)
-            hashtag_id = resp.json().get("data", [{}])[0].get("id")
-            if not hashtag_id:
-                return []
-
-            # Step 2: Recent media lo
-            media_url = f"{self.base}/{hashtag_id}/recent_media"
-            params = {
-                "user_id": self.user_id,
-                "fields": "id,caption,media_type,owner",
-                "access_token": self.token,
-                "limit": limit,
-            }
-            resp = requests.get(media_url, params=params, timeout=15)
-            return resp.json().get("data", [])
+            medias = self.cl.hashtag_medias_recent(hashtag.lstrip("#"), amount=limit)
+            return [
+                {
+                    "id": str(m.id),
+                    "caption": m.caption_text or "",
+                    "owner": {"id": str(m.user.pk), "username": m.user.username},
+                }
+                for m in medias
+            ]
         except Exception as e:
             logger.error(f"Hashtag search fail: {e}")
             return []
+
+    # user_id property for dm_handler compatibility
+    @property
+    def user_id(self) -> str:
+        if self._logged_in:
+            return str(self.cl.user_id)
+        return ""

@@ -15,122 +15,86 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Ab `.env` file open karo aur apni values bhari karo (neeche explained hai).
+Ab `.env` file open karo aur values bhari karo.
 
 ---
 
-## Step 3: API Keys Kahan Se Milenge
+## Step 3: API Keys (3 cheezein)
 
 ### A) Google Gemini API Key — BILKUL FREE!
-1. https://aistudio.google.com/app/apikey pe jao
-2. Google account se login karo (Gmail wala)
-3. "Create API Key" button dabao
-4. Copy karo aur `.env` mein `GEMINI_API_KEY=AIzaSy...` paste karo
-
-> **Free limit:** 15 requests/minute, 1 million tokens/day — daily bot ke liye kaafi hai!
+1. https://aistudio.google.com/app/apikey kholho
+2. Gmail account se login karo
+3. "Create API Key" dabao
+4. Copy karke `.env` mein paste karo:
+   ```
+   GEMINI_API_KEY=AIzaSyXXXXXXXX
+   ```
 
 ---
 
-### B) Instagram Graph API Token (IMPORTANT — Business Account)
-
-**Yeh thoda kaam ka hai lekin ek baar karo, phir 60 din kaam karega.**
-
-**Step B1: Facebook Developer Account**
-1. https://developers.facebook.com pe jao
-2. "My Apps" → "Create App" → "Business" select karo
-3. App naam: `HealthFitnessBot`
-
-**Step B2: Instagram Basic Display API Setup**
-1. Dashboard mein: "Add Product" → "Instagram Graph API"
-2. Settings mein apna Instagram Business account connect karo
-
-**Step B3: Instagram Messaging (DMs ke liye)**
-1. "Add Product" → "Messenger" bhi add karo
-2. Instagram Messaging permissions request karo:
-   - `instagram_basic`
-   - `instagram_manage_comments`
-   - `instagram_manage_messages`
-   - `pages_messaging`
-
-**Step B4: Access Token Generate Karo**
-1. Tools → Graph API Explorer
-2. Apni App select karo
-3. "Generate Access Token" → Instagram account se login karo
-4. "Get Long-Lived Token" (60-day token milega):
-   ```
-   https://graph.facebook.com/v18.0/oauth/access_token
-     ?grant_type=fb_exchange_token
-     &client_id={APP_ID}
-     &client_secret={APP_SECRET}
-     &fb_exchange_token={SHORT_LIVED_TOKEN}
-   ```
-
-**Step B5: Instagram User ID**
-```bash
-curl "https://graph.facebook.com/v18.0/me?fields=id,name&access_token=YOUR_TOKEN"
+### B) Instagram Username + Password — Koi developer account nahi chahiye!
+Sirf apna Instagram username aur password daalo:
 ```
-Milne wala `id` field hi `INSTAGRAM_USER_ID` hai.
+INSTAGRAM_USERNAME=tera_instagram_username
+INSTAGRAM_PASSWORD=tera_instagram_password
+```
 
-Dono `.env` mein paste karo:
-```
-INSTAGRAM_ACCESS_TOKEN=EAAxxxxxxxxxxxxx
-INSTAGRAM_USER_ID=17841400000000000
-```
+> **Tip:** Agar 2FA (Two-Factor Authentication) on hai toh band kar do ya
+> Instagram ke settings mein "App Password" banao.
 
 ---
 
-### C) ImgBB API Key (Free Image Hosting)
-1. https://imgbb.com pe sign up karo (free)
+### C) ImgBB API Key — FREE Image Hosting
+1. https://imgbb.com pe signup karo (Google se bhi ho sakta hai)
 2. https://api.imgbb.com pe jao
-3. "Get API Key" → Copy karo
-4. `.env` mein paste: `IMGBB_API_KEY=xxxxxxx`
+3. "Get API Key" copy karo
+4. `.env` mein paste karo:
+   ```
+   IMGBB_API_KEY=abc123def456
+   ```
 
 ---
 
-### D) Amazon Affiliate Tag (Optional lekin recommended)
+### D) Amazon Affiliate Tag (Optional — income ke liye)
 1. https://affiliate-program.amazon.in join karo
-2. Apna Associate ID copy karo (e.g. `yourname-21`)
+2. Associate ID copy karo (e.g. `yourname-21`)
 3. `.env` mein: `AMAZON_AFFILIATE_TAG=yourname-21`
 
 ---
 
-## Step 4: Test Karo (Ek ek step)
+## Step 4: Test Karo
 
 ```bash
-# Step 1: Sirf trend research test karo
+# AI + trend test (Instagram ki zaroorat nahi)
 python main.py --test-trend
 
-# Step 2: Content generation test karo
+# Caption + hashtags test
 python main.py --test-content
 
-# Step 3: Image design test karo (image /tmp/ig_post.jpg mein save hogi)
+# Ad image banao (saves to /tmp/ig_post.jpg)
 python main.py --test-design
 
-# Step 4: Full post test karo (actual Instagram pe post hoga!)
+# Instagram pe actual post karo!
 python main.py --test-post
 
-# Agar sab theek hai — abhi run karo
-python main.py --run-now
-
-# Daily scheduler shuru karo
+# Sab theek hai? Daily scheduler start karo:
 python main.py
 ```
 
 ---
 
-## Step 5: Server Pe Run Karo (24/7 ke liye)
+## Step 5: 24/7 Server Pe Run Karo
 
 ### Option A: Screen (Simple)
 ```bash
-screen -S instagram-bot
+screen -S healthbot
 python main.py
 # Ctrl+A then D to detach
-# screen -r instagram-bot to reattach
 ```
 
-### Option B: systemd Service (Best for VPS)
+### Option B: systemd (VPS pe best)
 ```bash
-sudo nano /etc/systemd/system/instagram-bot.service
+sudo nano /etc/systemd/system/healthbot.service
 ```
 ```ini
 [Unit]
@@ -142,53 +106,39 @@ User=ubuntu
 WorkingDirectory=/home/user/sanatan-hindu
 ExecStart=/usr/bin/python3 main.py
 Restart=always
-RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
 ```
 ```bash
-sudo systemctl enable instagram-bot
-sudo systemctl start instagram-bot
-sudo systemctl status instagram-bot
+sudo systemctl enable healthbot && sudo systemctl start healthbot
 ```
 
 ---
 
-## Bot Kya Karta Hai — Daily Schedule
+## Daily Schedule
 
-| Time | Action |
-|------|--------|
-| 08:00 AM | Trending health product dhundta hai + Hinglish caption + ad image banata hai + Instagram pe post karta hai |
-| 12:00 PM | 5 potential clients dhundta hai (#fitnessindia etc.) aur unhe friendly DM bhejta hai |
-| 06:00 PM | 5 aur clients dhundta hai + DM bhejta hai |
-| Har 30 min | Incoming DMs check karta hai aur Claude AI se automatically reply karta hai |
-| 12:01 AM | Daily DM counter reset karta hai |
-
----
-
-## Important Notes
-
-- **Instagram Spam**: Bot maximum 10 DMs/day bhejta hai — isse Instagram block nahi karega
-- **Token Renewal**: Access token 60 din mein expire hota hai — 55ve din pe renew kar lena
-- **Logs**: `bot_YYYYMM.log` file mein sab activity record hoti hai
-- **Test Mode**: Pehle `--test-design` run karo image quality check karne ke liye
+| Time | Kya karta hai |
+|------|--------------|
+| 08:00 AM | Trending product dhundta hai + ad image banata hai + Instagram post |
+| 12:00 PM | 5 potential clients dhundta hai + DM bhejta hai |
+| 06:00 PM | 5 aur clients + DM (max 10/day total) |
+| Har 30 min | Inbox check karta hai + AI se auto-reply |
 
 ---
 
 ## Troubleshooting
 
-**"Missing .env variables" error:**
-→ `.env` file check karo, `GEMINI_API_KEY` zaroor honi chahiye
+**Login fail:**
+→ 2FA band karo Instagram mein, phir try karo
 
-**"Media container error":**
-→ Instagram account Business/Creator hai confirm karo
-→ Token permissions check karo
+**"Challenge required":**
+→ Kuch ghante baad try karo, Instagram ne suspicious activity detect ki
 
-**"Google Trends fetch failed":**
-→ Normal hai — fallback product use hoga, post fir bhi hogi
-
-**Image mein font nahi aa rahi:**
+**Image font issue:**
 ```bash
-sudo apt install fonts-dejavu-core fonts-liberation
+sudo apt install fonts-dejavu-core
 ```
+
+**Google Trends 429:**
+→ Normal hai, bot fallback product use karta hai automatically
