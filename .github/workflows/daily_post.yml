@@ -1,0 +1,51 @@
+name: Daily Instagram Post
+
+on:
+  schedule:
+    # 8:00 AM IST = 2:30 AM UTC
+    - cron: '30 2 * * *'
+  workflow_dispatch:  # Manual trigger bhi kar sakte ho
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Python setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore Instagram session
+        uses: actions/cache@v4
+        with:
+          path: ig_session.json
+          key: ig-session-${{ runner.os }}
+          restore-keys: ig-session-
+
+      - name: Create .env
+        run: |
+          cat > .env << EOF
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          IMGBB_API_KEY=${{ secrets.IMGBB_API_KEY }}
+          INSTAGRAM_USERNAME=${{ secrets.INSTAGRAM_USERNAME }}
+          INSTAGRAM_PASSWORD=${{ secrets.INSTAGRAM_PASSWORD }}
+          AMAZON_AFFILIATE_TAG=${{ secrets.AMAZON_AFFILIATE_TAG }}
+          POST_TIME=08:00
+          EOF
+
+      - name: Run daily post + client hunt
+        run: python main.py --run-now
+
+      - name: Save Instagram session
+        uses: actions/cache@v4
+        if: always()
+        with:
+          path: ig_session.json
+          key: ig-session-${{ runner.os }}

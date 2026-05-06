@@ -149,6 +149,14 @@ def main():
         run_daily_post(ig, dm_handler)
         return
 
+    if "--check-dms" in args:
+        validate_config()
+        logger.info("=== DM CHECK ===")
+        ig = InstagramAgent()
+        dm_handler = DMHandler(ig)
+        run_dm_check(dm_handler)
+        return
+
     # Full scheduler mode
     validate_config()
     logger.info("Bot start ho raha hai...")
