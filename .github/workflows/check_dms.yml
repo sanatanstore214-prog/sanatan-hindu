@@ -15,8 +15,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: pip install instagrapi==2.5.13 pycryptodomex pillow requests schedule python-dotenv pytrends
+      - name: Install Python dependencies
+        run: |
+          pip install --no-deps instagrapi==2.5.13
+          pip install pycryptodomex pillow requests schedule python-dotenv pytrends httpx pydantic PySocks pytz
 
       - name: Restore Instagram session
         uses: actions/cache@v4

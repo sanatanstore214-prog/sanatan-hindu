@@ -15,8 +15,13 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: pip install instagrapi==2.5.13 pycryptodomex pillow requests schedule python-dotenv pytrends
+      - name: Install system fonts
+        run: sudo apt-get install -y fonts-dejavu-core
+
+      - name: Install Python dependencies
+        run: |
+          pip install --no-deps instagrapi==2.5.13
+          pip install pycryptodomex pillow requests schedule python-dotenv pytrends httpx pydantic PySocks pytz
 
       - name: Restore Instagram session
         uses: actions/cache@v4
@@ -32,7 +37,6 @@ jobs:
           echo "INSTAGRAM_USERNAME=rahul_editzz214" >> .env
           echo "INSTAGRAM_PASSWORD=Rahul@Nahipata72" >> .env
           echo "POST_TIME=08:00" >> .env
-          cat .env
 
       - name: Run daily post
         run: python main.py --run-now
