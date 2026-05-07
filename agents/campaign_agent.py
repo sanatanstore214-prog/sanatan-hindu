@@ -1,4 +1,5 @@
 import json
+import re
 import os
 from datetime import datetime, timedelta
 from typing import Optional
@@ -7,6 +8,37 @@ from utils.gemini_client import generate
 from utils.logger import get_logger
 
 logger = get_logger("CampaignAgent")
+
+
+def _extract_json(raw: str) -> dict:
+    """Extract JSON from Gemini output, handling truncation and markdown blocks."""
+    # Strip markdown code fences
+    raw = re.sub(r"```(?:json)?", "", raw).strip()
+    start = raw.find("{")
+    if start == -1:
+        raise ValueError("No JSON object found in response")
+    # Walk braces to find the longest valid JSON prefix
+    depth = 0
+    end = start
+    for i, ch in enumerate(raw[start:], start):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                end = i + 1
+                break
+    json_str = raw[start:end]
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError:
+        # Attempt to close any open arrays/objects from a truncated response
+        open_brackets = json_str.count("[") - json_str.count("]")
+        open_braces = json_str.count("{") - json_str.count("}")
+        json_str = json_str.rstrip().rstrip(",")
+        json_str += "]" * max(open_brackets, 0)
+        json_str += "}" * max(open_braces, 0)
+        return json.loads(json_str)
 
 CAMPAIGNS_FILE = "campaigns.json"
 
@@ -44,10 +76,8 @@ Product details:
 Iske liye ek complete {duration_days}-day marketing campaign strategy banao.
 """
         try:
-            raw = generate(CAMPAIGN_STRATEGIST_PROMPT, prompt, max_tokens=1500)
-            start = raw.find("{")
-            end = raw.rfind("}") + 1
-            campaign = json.loads(raw[start:end])
+            raw = generate(CAMPAIGN_STRATEGIST_PROMPT, prompt, max_tokens=2000)
+            campaign = _extract_json(raw)
 
             campaign["id"] = f"campaign_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             campaign["product"] = product
