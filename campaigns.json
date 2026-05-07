@@ -1,0 +1,119 @@
+[
+  {
+    "campaign_name": "AmazonBasics Medicine Ball: Your Home Gym Powerhouse",
+    "duration_days": 7,
+    "target_audience": {
+      "age_group": "22-45",
+      "interests": [
+        "home fitness",
+        "strength training",
+        "full-body workout",
+        "core strength",
+        "athletic performance",
+        "crossfit",
+        "functional training"
+      ],
+      "pain_points": [
+        "lack of gym access",
+        "limited space for equipment",
+        "desire for effective full-body workouts at home",
+        "plateauing in current fitness routine",
+        "need for versatile workout equipment"
+      ],
+      "platforms_used": [
+        "Instagram",
+        "Facebook",
+        "WhatsApp",
+        "Email"
+      ]
+    },
+    "campaign_goal": "conversion",
+    "daily_tasks": [
+      {
+        "day": 1,
+        "platform": "Instagram",
+        "content_type": "Reel/Story - Product Introduction & Benefits",
+        "description": "High-energy Reel showcasing the medicine ball and its key benefits (full-body strength, core stability, versatility). Use upbeat music and clear text overlays. Story poll: 'How do you prefer to train at home?' (Weights/Bodyweight/Cardio)",
+        "goal": "awareness"
+      },
+      {
+        "day": 2,
+        "platform": "Facebook",
+        "content_type": "Carousel Post - Exercise Showcase",
+        "description": "Carousel of 3-5 images/short videos demonstrating different exercises using the medicine ball (e.g., squats, Russian twists, slams). Include brief descriptions of how each exercise targets specific muscle groups. Link to product page.",
+        "goal": "engagement"
+      },
+      {
+        "day": 3,
+        "platform": "WhatsApp",
+        "content_type": "Broadcast Message - Testimonial/User-Generated Content",
+        "description": "Share a short, impactful testimonial from a user who has benefited from the medicine ball (if available) or a curated user-generated content post. Include a direct link to purchase. Use emojis to make it engaging.",
+        "goal": "conversion"
+      },
+      {
+        "day": 4,
+        "platform": "Instagram",
+        "content_type": "Static Post - 'Workout of the Day' Challenge",
+        "description": "Post a graphic with a simple, effective medicine ball workout routine (e.g., 3 rounds of 10 reps each of squats, twists, and slams). Encourage followers to try it and share their progress using a campaign hashtag. Offer a small discount code for participants.",
+        "goal": "engagement"
+      },
+      {
+        "day": 5,
+        "platform": "Email",
+        "content_type": "Newsletter - Deep Dive into Versatility",
+        "description": "Email to subscribers highlighting the diverse uses of the medicine ball for different fitness goals (strength, cardio, core). Include links to blog posts or articles about medicine ball workouts. Feature a limited-time offer.",
+        "goal": "conversion"
+      },
+      {
+        "day": 6,
+        "platform": "Facebook",
+        "content_type": "Live Q&A / Demo",
+        "description": "Host a short live session demonstrating advanced medicine ball exercises and answering audience questions about the product and its usage. Promote this session 24 hours in advance on all platforms.",
+        "goal": "engagement"
+      },
+      {
+        "day": 7,
+        "platform": "WhatsApp & Instagram Stories",
+        "content_type": "Last Chance Reminder / Urgency",
+        "description": "Send a broadcast message on WhatsApp and post a series of stories on Instagram reminding users about the ongoing offer (if any) and the benefits of the medicine ball. Use urgency tactics like 'Offer ends tonight!' and a direct purchase link.",
+        "goal": "conversion"
+      }
+    ],
+    "key_messages": [
+      "Unlock full-body strength and conditioning right at home.",
+      "Improve your core stability and balance with just one versatile piece of equipment.",
+      "AmazonBasics Medicine Ball: The smart choice for effective home workouts.",
+      "From squats to slams, elevate your fitness game with the AmazonBasics Medicine Ball."
+    ],
+    "hashtag_strategy": "A mix of broad, niche, and branded hashtags. \n- **Broad:** #HomeFitness #Workout #FitnessGoals #GymAtHome #Exercise\n- **Niche:** #MedicineBallWorkout #StrengthTraining #CoreWorkout #FunctionalFitness #FullBodyWorkout #AmazonBasicsFitness\n- **Branded:** #AmazonBasicsMedicineBall #MyAmazonBasicsHomeGym",
+    "success_metrics": [
+      "Website traffic from social media and email",
+      "Click-through rate (CTR) on product links",
+      "Conversion rate (purchases)",
+      "Engagement rate on Instagram and Facebook posts (likes, comments, shares, saves)",
+      "Number of direct messages/inquiries received",
+      "Reach and impressions of campaign content"
+    ],
+    "id": "campaign_20260507_231047",
+    "product": {
+      "product_name": "AmazonBasics Dual-Grip Rubber Encased Medicine Ball",
+      "brand": "AmazonBasics",
+      "category": "equipment",
+      "price_range": "INR 1500 - 3000",
+      "why_trending": "Medicine balls are versatile for full-body workouts, building strength, and improving coordination, making them popular for home fitness enthusiasts.",
+      "key_benefits": [
+        "Full-body strength and conditioning",
+        "Improved core stability and balance",
+        "Versatile for various exercises (squats, twists, slams)"
+      ],
+      "target_audience": "Individuals looking to improve overall fitness, build strength, and enhance athletic performance at home.",
+      "affiliate_keyword": "medicine ball for exercise india",
+      "urgency_factor": "Increasing trend of home workouts post-pandemic continues to drive demand for versatile fitness equipment."
+    },
+    "created_at": "2026-05-07T23:10:47.612652",
+    "start_date": "2026-05-07",
+    "end_date": "2026-05-14",
+    "status": "active",
+    "completed_tasks": []
+  }
+]
