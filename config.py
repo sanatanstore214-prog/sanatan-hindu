@@ -59,3 +59,19 @@ HEALTH_KEYWORDS = [
 
 # Instagram Graph API base URL
 IG_API_BASE = "https://graph.facebook.com/v18.0"
+
+# ── Digital Marketing Bot settings ──────────────────────────────────────────
+
+# Campaign defaults
+CAMPAIGN_DURATION_DAYS = int(os.getenv("CAMPAIGN_DURATION_DAYS", "7"))
+
+# Weekly report schedule (day: mon/tue/wed/thu/fri/sat/sun, time: HH:MM)
+WEEKLY_REPORT_DAY = os.getenv("WEEKLY_REPORT_DAY", "sunday")
+WEEKLY_REPORT_TIME = os.getenv("WEEKLY_REPORT_TIME", "20:00")
+
+# Lead management
+FOLLOWUP_INTERVAL_HOURS = int(os.getenv("FOLLOWUP_INTERVAL_HOURS", "48"))
+MAX_HOT_LEADS_DISPLAY = 10
+
+# Platforms supported by MultiPlatformAgent
+SUPPORTED_PLATFORMS = ["instagram", "facebook", "whatsapp", "twitter_x", "email", "blog"]
