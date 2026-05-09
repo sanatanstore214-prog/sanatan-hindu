@@ -25,7 +25,12 @@ jobs:
         shell: cmd
 
       - name: Run daily post
-        run: python main.py --run-now
+        run: python main.py --run-now > output.log 2>&1 & type output.log
         shell: cmd
         env:
           IG_SESSION_ID: ${{ secrets.IG_SESSION_ID }}
+
+      - name: Show error log
+        if: failure()
+        run: type output.log
+        shell: cmd
