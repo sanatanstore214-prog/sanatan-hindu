@@ -15,19 +15,6 @@ jobs:
         run: pip install --no-deps instagrapi==2.5.13 && pip install pycryptodomex pillow requests schedule python-dotenv pytrends httpx pydantic PySocks pytz
         shell: cmd
 
-      - name: Restore Instagram session from secret
-        run: |
-          $session = $env:IG_SESSION_JSON
-          if ($session) {
-            [System.IO.File]::WriteAllText("ig_session.json", $session)
-            Write-Host "Session restored from secret"
-          } else {
-            Write-Host "No session secret found"
-          }
-        shell: powershell
-        env:
-          IG_SESSION_JSON: ${{ secrets.IG_SESSION_JSON }}
-
       - name: Create .env
         run: |
           echo GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}> .env
