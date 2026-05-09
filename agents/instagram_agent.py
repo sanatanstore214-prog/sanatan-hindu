@@ -27,6 +27,8 @@ class InstagramAgent:
         session_id = os.getenv("IG_SESSION_ID", "").strip()
         if session_id:
             try:
+                from urllib.parse import unquote
+                session_id = unquote(session_id)
                 self.cl.login_by_sessionid(session_id)
                 self.cl.dump_settings(SESSION_FILE)
                 logger.info("sessionid se login successful")
