@@ -24,8 +24,10 @@ class InstagramAgent:
         if SESSION_FILE.exists():
             try:
                 self.cl.load_settings(SESSION_FILE)
-                self.cl.login(INSTAGRAM_USERNAME, INSTAGRAM_PASSWORD)
-                self.cl.get_timeline_feed()  # Session valid hai ya nahi check karo
+                self.cl.set_settings(self.cl.get_settings())
+                # login() mat call karo — GitHub Actions IP blacklisted hota hai Instagram pe
+                # Sirf session cookie se timeline check karo
+                self.cl.get_timeline_feed()
                 logger.info("Session se login successful")
                 self._logged_in = True
                 return True
