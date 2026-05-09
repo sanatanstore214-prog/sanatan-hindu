@@ -17,11 +17,14 @@ jobs:
 
       - name: Restore Instagram session from secret
         run: |
-          if not "%IG_SESSION_JSON%"=="" (
-            echo %IG_SESSION_JSON% > ig_session.json
-            echo Session restored from secret
-          )
-        shell: cmd
+          $session = $env:IG_SESSION_JSON
+          if ($session) {
+            [System.IO.File]::WriteAllText("ig_session.json", $session)
+            Write-Host "Session restored from secret"
+          } else {
+            Write-Host "No session secret found"
+          }
+        shell: pwsh
         env:
           IG_SESSION_JSON: ${{ secrets.IG_SESSION_JSON }}
 
