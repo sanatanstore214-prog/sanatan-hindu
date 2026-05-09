@@ -4,3 +4,5 @@ __pycache__/
 .env
 /tmp/
 assets/fonts/
+ig_session.json
+.env
