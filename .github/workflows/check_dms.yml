@@ -47,6 +47,8 @@ jobs:
 
       - name: Check and reply DMs
         run: python main.py --check-dms
+        env:
+          IG_SESSION_ID: ${{ secrets.IG_SESSION_ID }}
 
       - name: Save session cache
         uses: actions/cache@v4

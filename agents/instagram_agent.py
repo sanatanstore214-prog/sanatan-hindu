@@ -1,3 +1,4 @@
+import os
 import time
 import base64
 import requests
@@ -16,35 +17,48 @@ SESSION_FILE = Path("ig_session.json")
 class InstagramAgent:
     def __init__(self):
         self.cl = Client()
-        self.cl.delay_range = [2, 5]  # Random delay between actions (anti-spam)
+        self.cl.delay_range = [2, 5]
         self._logged_in = False
 
     def login(self) -> bool:
-        """Login to Instagram — session reuse karo agar possible ho."""
+        """Login — session cookie > saved session > fresh login (last resort)."""
+
+        # 1. sessionid env var se login — safest, no IP check (GitHub Actions ke liye)
+        session_id = os.getenv("IG_SESSION_ID", "").strip()
+        if session_id:
+            try:
+                self.cl.login_by_sessionid(session_id)
+                self.cl.dump_settings(SESSION_FILE)
+                logger.info("sessionid se login successful")
+                self._logged_in = True
+                return True
+            except Exception as e:
+                logger.warning(f"sessionid login fail ({e}), session file try karta hoon...")
+
+        # 2. Saved session file se login — login() call nahi, IP check avoid
         if SESSION_FILE.exists():
             try:
                 self.cl.load_settings(SESSION_FILE)
                 self.cl.set_settings(self.cl.get_settings())
-                # login() mat call karo — GitHub Actions IP blacklisted hota hai Instagram pe
-                # Sirf session cookie se timeline check karo
                 self.cl.get_timeline_feed()
-                logger.info("Session se login successful")
+                logger.info("Session file se login successful")
                 self._logged_in = True
                 return True
-            except Exception:
-                logger.warning("Saved session expire ho gayi, fresh login kar raha hoon...")
+            except Exception as e:
+                logger.warning(f"Session file expire ({e}), fresh login try...")
 
+        # 3. Fresh login — GitHub Actions IP pe yeh fail ho sakta hai
         try:
             self.cl.login(INSTAGRAM_USERNAME, INSTAGRAM_PASSWORD)
             self.cl.dump_settings(SESSION_FILE)
-            logger.info("Fresh login successful, session save ho gayi")
+            logger.info("Fresh login successful")
             self._logged_in = True
             return True
         except TwoFactorRequired:
-            logger.error("2FA enabled hai — Instagram mein 2FA band karo ya app password use karo")
+            logger.error("2FA enabled — band karo")
             return False
         except ChallengeRequired:
-            logger.error("Instagram ne challenge diya — kuch der baad try karo")
+            logger.error("Challenge required — kuch der baad try karo")
             return False
         except Exception as e:
             logger.error(f"Login fail: {e}")
