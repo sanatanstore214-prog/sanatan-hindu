@@ -11,50 +11,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install system fonts
-        run: sudo apt-get install -y fonts-dejavu-core
-
       - name: Install Python dependencies
-        run: |
-          pip install --no-deps instagrapi==2.5.13
-          pip install pycryptodomex pillow requests schedule python-dotenv pytrends httpx pydantic PySocks pytz
+        run: pip install --no-deps instagrapi==2.5.13 && pip install pycryptodomex pillow requests schedule python-dotenv pytrends httpx pydantic PySocks pytz
+        shell: cmd
 
       - name: Restore Instagram session from secret
         run: |
-          if [ -n "$IG_SESSION_JSON" ]; then
-            echo "$IG_SESSION_JSON" > ig_session.json
-            echo "Session secret se restore hua"
-          fi
+          if not "%IG_SESSION_JSON%"=="" (
+            echo %IG_SESSION_JSON% > ig_session.json
+            echo Session restored from secret
+          )
+        shell: cmd
         env:
           IG_SESSION_JSON: ${{ secrets.IG_SESSION_JSON }}
 
-      - name: Restore session cache (fallback)
-        uses: actions/cache@v4
-        with:
-          path: ig_session.json
-          key: ig-session-v2
-          restore-keys: ig-session-
-
       - name: Create .env
         run: |
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
-          echo "IMGBB_API_KEY=${{ secrets.IMGBB_API_KEY }}" >> .env
-          echo "INSTAGRAM_USERNAME=${{ secrets.INSTAGRAM_USERNAME }}" >> .env
-          echo "INSTAGRAM_PASSWORD=${{ secrets.INSTAGRAM_PASSWORD }}" >> .env
-          echo "POST_TIME=08:00" >> .env
+          echo GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}> .env
+          echo IMGBB_API_KEY=${{ secrets.IMGBB_API_KEY }}>>.env
+          echo INSTAGRAM_USERNAME=${{ secrets.INSTAGRAM_USERNAME }}>>.env
+          echo INSTAGRAM_PASSWORD=${{ secrets.INSTAGRAM_PASSWORD }}>>.env
+          echo POST_TIME=08:00>>.env
+        shell: cmd
 
       - name: Run daily post
         run: python main.py --run-now
+        shell: cmd
         env:
           IG_SESSION_ID: ${{ secrets.IG_SESSION_ID }}
-
-      - name: Save Instagram session
-        uses: actions/cache@v4
-        if: always()
-        with:
-          path: ig_session.json
-          key: ig-session-v2
