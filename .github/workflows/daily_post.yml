@@ -24,7 +24,7 @@ jobs:
           } else {
             Write-Host "No session secret found"
           }
-        shell: pwsh
+        shell: powershell
         env:
           IG_SESSION_JSON: ${{ secrets.IG_SESSION_JSON }}
 
