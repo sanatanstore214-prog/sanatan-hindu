@@ -23,27 +23,38 @@ jobs:
           pip install --no-deps instagrapi==2.5.13
           pip install pycryptodomex pillow requests schedule python-dotenv pytrends httpx pydantic PySocks pytz
 
-      - name: Restore Instagram session
+      - name: Restore Instagram session from secret
+        run: |
+          if [ -n "$IG_SESSION_JSON" ]; then
+            echo "$IG_SESSION_JSON" > ig_session.json
+            echo "Session secret se restore hua"
+          fi
+        env:
+          IG_SESSION_JSON: ${{ secrets.IG_SESSION_JSON }}
+
+      - name: Restore session cache (fallback)
         uses: actions/cache@v4
         with:
           path: ig_session.json
-          key: ig-session-v1
+          key: ig-session-v2
           restore-keys: ig-session-
 
       - name: Create .env
         run: |
-          echo "GEMINI_API_KEY=AIzaSyC-yL_CsfirmhdZIhvCav9YRQnD-Dr63Bs" > .env
-          echo "IMGBB_API_KEY=b3c72931acbd147653d4b071f45175cd" >> .env
-          echo "INSTAGRAM_USERNAME=rahul_editzz214" >> .env
-          echo "INSTAGRAM_PASSWORD=Rahul@Nahipata72" >> .env
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
+          echo "IMGBB_API_KEY=${{ secrets.IMGBB_API_KEY }}" >> .env
+          echo "INSTAGRAM_USERNAME=${{ secrets.INSTAGRAM_USERNAME }}" >> .env
+          echo "INSTAGRAM_PASSWORD=${{ secrets.INSTAGRAM_PASSWORD }}" >> .env
           echo "POST_TIME=08:00" >> .env
 
       - name: Run daily post
         run: python main.py --run-now
+        env:
+          IG_SESSION_ID: ${{ secrets.IG_SESSION_ID }}
 
       - name: Save Instagram session
         uses: actions/cache@v4
         if: always()
         with:
           path: ig_session.json
-          key: ig-session-v1
+          key: ig-session-v2
