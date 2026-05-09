@@ -17,7 +17,7 @@ CLIENT_HUNT_TIME_2 = os.getenv("CLIENT_HUNT_TIME_2", "18:00")
 DM_CHECK_INTERVAL_MINUTES = 30
 
 # Gemini model (FREE tier — no credit card needed)
-GEMINI_MODEL = "gemini-2.5-flash-lite"
+GEMINI_MODEL = "gemini-2.5-flash"
 
 # Daily limits (Instagram spam prevention)
 MAX_DMS_PER_DAY = 10
