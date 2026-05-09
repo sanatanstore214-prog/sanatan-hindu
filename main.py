@@ -59,6 +59,7 @@ def validate_config():
 
 def run_daily_post(ig: InstagramAgent, dm_handler: DMHandler):
     """Full daily post cycle: trend → content → design → post."""
+    import traceback
     global _last_product, _last_content
     logger.info("=" * 50)
     logger.info(f"Daily post cycle shuru — {datetime.now().strftime('%Y-%m-%d %H:%M')}")
@@ -68,32 +69,54 @@ def run_daily_post(ig: InstagramAgent, dm_handler: DMHandler):
     design_agent = DesignAgent()
 
     # Step 1: Trending product dhundho
-    product = trend_agent.find_trending_product()
+    logger.info("STEP 1: Trend research...")
+    try:
+        product = trend_agent.find_trending_product()
+    except Exception as e:
+        logger.error(f"STEP 1 FAILED: {e}\n{traceback.format_exc()}")
+        raise
     if not product:
         logger.error("Product nahi mila, aaj skip kar raha hoon")
         return
+    logger.info(f"STEP 1 OK: {product.get('product_name')}")
 
     # Step 2: Content generate karo
-    content = content_agent.generate_content(product)
+    logger.info("STEP 2: Content generation...")
+    try:
+        content = content_agent.generate_content(product)
+    except Exception as e:
+        logger.error(f"STEP 2 FAILED: {e}\n{traceback.format_exc()}")
+        raise
     if not content:
         logger.error("Content generate nahi hua")
         return
+    logger.info("STEP 2 OK: Content ready")
 
     # Step 3: Ad image banao
-    image_path = design_agent.create_ad_image(product, content)
+    logger.info("STEP 3: Image design...")
+    try:
+        image_path = design_agent.create_ad_image(product, content)
+    except Exception as e:
+        logger.error(f"STEP 3 FAILED: {e}\n{traceback.format_exc()}")
+        raise
+    logger.info(f"STEP 3 OK: Image at {image_path}")
 
     # Step 4: Instagram pe post karo
-    post_id = ig.post_image(image_path, content["caption"], content["hashtags"])
+    logger.info("STEP 4: Instagram upload...")
+    try:
+        post_id = ig.post_image(image_path, content["caption"], content["hashtags"])
+    except Exception as e:
+        logger.error(f"STEP 4 FAILED: {e}\n{traceback.format_exc()}")
+        raise
     if post_id:
-        logger.info(f"Post successful! ID: {post_id}")
+        logger.info(f"STEP 4 OK: Post live! ID: {post_id}")
     else:
-        logger.error("Post fail hua!")
+        logger.error("STEP 4 FAILED: post_image returned None")
+        raise RuntimeError("Instagram post failed — post_image returned None")
 
-    # Update DM handler with today's product (for affiliate links in DMs)
     _last_product = product
     _last_content = content
     dm_handler.update_product_context(product, content)
-
     logger.info("Daily post cycle complete!")
     logger.info("=" * 50)
 
