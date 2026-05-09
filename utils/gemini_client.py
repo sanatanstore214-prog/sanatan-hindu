@@ -9,33 +9,25 @@ logger = get_logger("GeminiClient")
 _API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
 
 
-def _call(payload: dict, retries: int = 4) -> str:
+def _call(payload: dict, retries: int = 2) -> str:
     """Core API call with exponential backoff retry."""
     url = _API_URL.format(model=GEMINI_MODEL, key=GEMINI_API_KEY)
-    delay = 5
+    delay = 3
     for attempt in range(retries):
         try:
-            resp = requests.post(url, json=payload, timeout=40)
+            resp = requests.post(url, json=payload, timeout=20)
             if resp.status_code == 200:
                 return resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-            body = resp.json()
-            err_msg = body.get("error", {}).get("message", "")
-            retry_after = body.get("error", {}).get("details", [{}])
-            # Extract retryDelay if present
-            for detail in body.get("error", {}).get("details", []):
-                if detail.get("@type", "").endswith("RetryInfo"):
-                    secs = int(detail.get("retryDelay", "5s").replace("s", ""))
-                    delay = max(delay, secs + 2)
             if resp.status_code in (429, 503, 500):
                 logger.warning(f"Gemini {resp.status_code}, retry {attempt+1}/{retries} in {delay}s...")
                 time.sleep(delay)
-                delay = min(delay * 2, 60)
+                delay = min(delay * 2, 10)
                 continue
             resp.raise_for_status()
         except requests.exceptions.Timeout:
             logger.warning(f"Timeout, retry {attempt+1}/{retries} in {delay}s...")
             time.sleep(delay)
-            delay = min(delay * 2, 60)
+            delay = min(delay * 2, 10)
     raise RuntimeError(f"Gemini API failed after {retries} retries")
 
 
