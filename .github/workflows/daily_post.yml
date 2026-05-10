@@ -24,10 +24,20 @@ jobs:
           echo POST_TIME=08:00>>.env
         shell: cmd
 
-      - name: Run daily post
+      - name: Run daily post (with log)
         run: |
-          python --version
-          python main.py --run-now
+          python --version 2>&1
+          python main.py --run-now > post_output.txt 2>&1
+          type post_output.txt
+          exit /b %ERRORLEVEL%
         shell: cmd
         env:
           IG_SESSION_ID: ${{ secrets.IG_SESSION_ID }}
+
+      - name: Upload log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-log
+          path: post_output.txt
+          retention-days: 3
