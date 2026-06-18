@@ -1,0 +1,17 @@
+{
+  "name": "Sanatan Hindu — आरती, चालीसा, मंत्र",
+  "short_name": "Sanatan Hindu",
+  "description": "हनुमान चालीसा, आरती, मंत्र और 2026 व्रत-त्योहार कैलेंडर। PC व मोबाइल, ऑफलाइन भी।",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FF7722",
+  "theme_color": "#D35400",
+  "lang": "hi",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
