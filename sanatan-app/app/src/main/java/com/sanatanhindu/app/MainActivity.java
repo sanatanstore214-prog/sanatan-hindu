@@ -2,9 +2,12 @@ package com.sanatanhindu.app;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -14,7 +17,6 @@ import android.webkit.JavascriptInterface;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.webkit.WebViewAssetLoader;
 
@@ -31,11 +33,12 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
  * Sanatan Hindu — offline devotional app (Aarti, Chalisa, Mantra, Vrat calendar)
  * wrapped in a WebView, monetised with Google AdMob (banner + interstitial).
  *
- * Saara content app ke andar offline hai. Internet sirf ads load karne ke
- * liye use hota hai — agar net na ho to app phir bhi chalta hai, bas ad
- * nahi dikhta.
+ * Design rule: CONTENT pehle load hota hai, ADS baad me try/catch me — taaki
+ * agar ads/Play-services fail bhi ho jaye to app phir bhi normal khule.
  */
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "SanatanHindu";
 
     // ================================================================
     // AD UNIT IDs — abhi GOOGLE ke OFFICIAL TEST IDs lage hain (safe).
@@ -50,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
     private FrameLayout adContainer;
     private AdView bannerAd;
     private InterstitialAd interstitialAd;
-    // Har kuch screen-change ke baad hi full-screen ad dikhao (annoying na ho)
     private int navCount = 0;
     private static final int INTERSTITIAL_EVERY = 4;
 
@@ -60,24 +62,23 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // AdMob initialise (background thread me hota hai)
-        MobileAds.initialize(this, initializationStatus -> {});
-
         adContainer = findViewById(R.id.ad_container);
         webView = findViewById(R.id.webview);
 
+        // ---- 1) Sabse pehle CONTENT load karo (ye kabhi fail nahi hona chahiye) ----
         setupWebView();
-        loadBanner();
-        loadInterstitial();
-
-        // Local assets ko https://appassets.androidx.org/ se serve karo
         webView.loadUrl("https://appassets.androidx.org/assets/web/index.html");
+
+        // ---- 2) Ads alag se, try/catch me — fail ho to app par koi asar nahi ----
+        initAdsSafely();
     }
 
     private void setupWebView() {
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .build();
+
+        webView.setBackgroundColor(Color.parseColor("#FFF8EE"));
 
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
@@ -96,56 +97,87 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
-                // Internal app pages -> WebView me hi khulein
                 if ("appassets.androidx.org".equals(url.getHost())) {
-                    return false;
+                    return false; // internal page -> WebView me hi khole
                 }
-                // Bahari link (website, WhatsApp, store) -> browser me khulein
                 try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, url));
+                    startActivity(new Intent(Intent.ACTION_VIEW, url)); // bahari link -> browser
                 } catch (Exception ignored) {
                 }
                 return true;
             }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                // Agar content load na ho to white screen ki jagah message dikhao
+                if (request.isForMainFrame()) {
+                    String msg = "<html><body style='font-family:sans-serif;text-align:center;"
+                            + "padding:40px;background:#FFF8EE;color:#7B241C'>"
+                            + "<h2>🚩 सनातन हिन्दू</h2><p>App load nahi ho paya. "
+                            + "App band karke dobara kholiye.</p></body></html>";
+                    view.loadData(msg, "text/html; charset=utf-8", "UTF-8");
+                }
+            }
         });
     }
 
+    private void initAdsSafely() {
+        try {
+            MobileAds.initialize(this, status -> {});
+            loadBanner();
+            loadInterstitial();
+        } catch (Throwable t) {
+            Log.w(TAG, "Ads init skipped: " + t.getMessage());
+        }
+    }
+
     private void loadBanner() {
-        bannerAd = new AdView(this);
-        bannerAd.setAdUnitId(BANNER_AD_UNIT_ID);
-        bannerAd.setAdSize(AdSize.BANNER);
-        adContainer.removeAllViews();
-        adContainer.addView(bannerAd);
-        bannerAd.loadAd(new AdRequest.Builder().build());
+        try {
+            bannerAd = new AdView(this);
+            bannerAd.setAdUnitId(BANNER_AD_UNIT_ID);
+            bannerAd.setAdSize(AdSize.BANNER);
+            adContainer.removeAllViews();
+            adContainer.addView(bannerAd);
+            bannerAd.loadAd(new AdRequest.Builder().build());
+        } catch (Throwable t) {
+            Log.w(TAG, "Banner skipped: " + t.getMessage());
+        }
     }
 
     private void loadInterstitial() {
-        InterstitialAd.load(this, INTERSTITIAL_AD_UNIT_ID,
-                new AdRequest.Builder().build(),
-                new InterstitialAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(@NonNull InterstitialAd ad) {
-                        interstitialAd = ad;
-                        interstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-                            @Override
-                            public void onAdDismissedFullScreenContent() {
-                                interstitialAd = null;
-                                loadInterstitial(); // agla ad pehle se taiyaar rakho
-                            }
-                        });
-                    }
+        try {
+            InterstitialAd.load(this, INTERSTITIAL_AD_UNIT_ID,
+                    new AdRequest.Builder().build(),
+                    new InterstitialAdLoadCallback() {
+                        @Override
+                        public void onAdLoaded(@NonNull InterstitialAd ad) {
+                            interstitialAd = ad;
+                            interstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+                                @Override
+                                public void onAdDismissedFullScreenContent() {
+                                    interstitialAd = null;
+                                    loadInterstitial();
+                                }
+                            });
+                        }
 
-                    @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError error) {
-                        interstitialAd = null;
-                    }
-                });
+                        @Override
+                        public void onAdFailedToLoad(@NonNull LoadAdError error) {
+                            interstitialAd = null;
+                        }
+                    });
+        } catch (Throwable t) {
+            Log.w(TAG, "Interstitial skipped: " + t.getMessage());
+        }
     }
 
     private void maybeShowInterstitial() {
-        navCount++;
-        if (navCount % INTERSTITIAL_EVERY == 0 && interstitialAd != null) {
-            interstitialAd.show(this);
+        try {
+            navCount++;
+            if (navCount % INTERSTITIAL_EVERY == 0 && interstitialAd != null) {
+                interstitialAd.show(this);
+            }
+        } catch (Throwable ignored) {
         }
     }
 
@@ -153,7 +185,6 @@ public class MainActivity extends AppCompatActivity {
     private class AndroidBridge {
         @JavascriptInterface
         public void onNavigate() {
-            // JS thread se UI thread par switch
             runOnUiThread(MainActivity.this::maybeShowInterstitial);
         }
     }
