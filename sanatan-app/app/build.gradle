@@ -1,0 +1,48 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.sanatanhindu.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.sanatanhindu.app"
+        minSdk 23
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        // ============================================================
+        // AdMob App ID — abhi GOOGLE TEST ID laga hai (safe).
+        // Apna real AdMob App ID yahan dalo jab account ban jaye:
+        //   1. https://admob.google.com par account banao (free)
+        //   2. App add karo -> "App ID" copy karo (ca-app-pub-XXXX~YYYY)
+        //   3. Niche wali line me test ID hatao, apni dalo.
+        // WARNING: Testing ke waqt apni real ID + apne phone se ad mat
+        // click karo, warna Google account ban kar dega.
+        // ============================================================
+        manifestPlaceholders = [
+            admobAppId: "ca-app-pub-3940256099942544~3347511713"
+        ]
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.webkit:webkit:1.11.0'
+    // Google AdMob (kamai ke liye)
+    implementation 'com.google.android.gms:play-services-ads:23.2.0'
+}
