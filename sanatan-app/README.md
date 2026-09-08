@@ -1,116 +1,76 @@
-# 🚩 Sanatan Hindu — Devotional App (with AdMob earning)
+# 🚩 Bhakti Daily — Chalisa, Aarti, Mantra & Daily Bhakti Reminder
 
-Ek **offline भक्ति app** — Hanuman Chalisa, Aarti, Mantra aur 2026 ka
-Vrat/Tyohar calendar. Kamai **Google AdMob ads** se hoti hai (banner +
-full-screen ad).
+Ek **premium, offline** devotional Android app. Hanuman Chalisa, aarti,
+mantra + **daily reminder**, **streak**, **search**, **favorites**, **dark
+mode**, **share cards**. Kamai **Google AdMob** se.
 
-> **Note:** Ye app **WebView + HTML/JS** se bana hai. Saara content phone ke
-> andar offline hai — internet sirf ad load karne ke liye chahiye.
-
----
-
-## 💰 Paise kaise aayenge? (Sach-sach)
-
-Ye **koi "auto free money" app nahi** hai. Asli kamai ka rasta:
-
-```
-App banao  →  Play Store par daalo  →  Log download karein  →
-   App khulne par ads dikhe  →  Ads se paisa (AdMob)
-```
-
-- **Banner ad**: niche hamesha dikhta hai → har view par thoda paisa.
-- **Interstitial (full-screen) ad**: har 4 screen-change par ek baar.
-- Kamai **users par depend** karti hai. ~1000 active users se mahine ke
-  kuch hazaar rupaye possible hain — par iske liye **download laana**
-  (Instagram/WhatsApp/YouTube promotion) zaroori hai. Ye mehnat se aata hai,
-  jaadू se nahi.
-
-> ⚠️ **AdMob ke 2 golden rules** (warna account ban):
-> 1. Apni real ad ID lagne ke baad **apne phone se apne hi ad mat click karo**.
-> 2. Doston ko "click karo" mat bolo. Sirf asli users.
+> Architecture: native `MainActivity` (Java) ek WebView host karta hai jo
+> offline HTML/CSS/JS app serve karta hai (`WebViewAssetLoader`). Reminders,
+> notifications, sharing, ads — sab native. Content + UI web layer me.
 
 ---
 
-## 📲 APK kaise banayein (2 tareeke)
+## ✨ Features
+- **Home dashboard** — samay ke hisaab se greeting, "aaj ki bhakti" (vaar-devta),
+  streak, quick access, continue-reading, favorites, recents, agla tyohar.
+- **Library** — Chalisa / Aarti / Mantra sections (17 verified paath ready,
+  baaki catalog me "जल्द" — hum galat/nakli religious text nahi daalte).
+- **Reader** — bada/chota font, Light/Dark, **Focus mode**, progress bar,
+  "jahan chhoda tha", favorite, share, share-card.
+- **Daily Reminder** — AlarmManager se, boot ke baad bhi, deep-link seedha
+  content me. Android 13+ permission handle.
+- **Streak** — 3/7/21/40/108 din milestones (koi jua-jaisi cheez nahi).
+- **Search / Favorites / Recents** — sab offline, localStorage.
+- **Share cards** — canvas se sundar card → native share (FileProvider).
+- **Ads** — banner + interstitial sirf natural boundaries par (launch ya
+  reading ke waqt kabhi nahi). Premium se ads band (architecture ready).
 
-### Tareeka 1 — GitHub Actions se (sabse aasaan, PC me kuch install nahi karna)
+---
 
-1. Is code ko GitHub par push karo (already pushed hai).
-2. GitHub repo → **Actions** tab → **"Build Sanatan Hindu APK"** → **Run workflow**.
-3. ~3-4 min baad **Artifacts** se `SanatanHindu-debug-apk` download karo.
-4. ZIP kholke andar `app-debug.apk` apne Android phone me install karo.
-   (Phone settings me "Unknown sources / Install unknown apps" allow karna padega.)
+## 📲 APK banao
+### GitHub Actions (aasaan)
+Repo → **Actions** → "Build Sanatan Hindu APK" → **Run workflow** → Artifacts
+se `app-debug.apk` download → phone me install.
 
-### Tareeka 2 — Apne computer par (Android SDK chahiye)
-
+### PC par
 ```bash
 cd sanatan-app
-./gradlew assembleDebug
-# APK yahan milega:
-# app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleRelease      # unsigned release (Play ke liye sign karna hoga)
 ```
 
 ---
 
-## 🔑 Apni AdMob ID lagao (kamai ON karne ke liye)
+## 🔑 Apni kamai ON karo (AdMob)
+Abhi **Google TEST ad IDs** lage hain (safe, inse paisa nahi). Badalna:
+1. `app/build.gradle` → `manifestPlaceholders.admobAppId` = apni **App ID**
+2. `app/src/main/java/com/sanatanhindu/app/AdConfig.java` → `BANNER_AD_UNIT_ID`
+   aur `INTERSTITIAL_AD_UNIT_ID` = apni real Ad Unit IDs
+3. Rebuild.
 
-Abhi app me **Google ki TEST ad IDs** lagi hain (safe — par inse paisa nahi
-milta). Apni kamai shuru karne ke liye:
-
-1. https://admob.google.com par **free account** banao.
-2. **Apps → Add App → Android** → app ka naam "Sanatan Hindu" do.
-   - Yahan se **App ID** milega: `ca-app-pub-XXXXXXXX~YYYYYYYY`
-3. **Ad units** banao: ek **Banner**, ek **Interstitial**.
-   - Har ek ka **Ad unit ID** milega: `ca-app-pub-XXXXXXXX/ZZZZZZZZ`
-4. Code me 2 jagah badlo:
-
-   **a) App ID** → `app/build.gradle` me:
-   ```gradle
-   manifestPlaceholders = [
-       admobAppId: "ca-app-pub-XXXXXXXX~YYYYYYYY"   // <- apni App ID
-   ]
-   ```
-
-   **b) Ad unit IDs** → `app/src/main/java/com/sanatanhindu/app/MainActivity.java` me:
-   ```java
-   private static final String BANNER_AD_UNIT_ID = "ca-app-pub-XXXXXXXX/ZZZZZZZZ";
-   private static final String INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-XXXXXXXX/WWWWWWWW";
-   ```
-
-5. Dobara build karo (upar wala Tareeka 1 ya 2).
+> ⚠️ Real ID lagne ke baad apne phone se apne ad par **click mat karna**.
 
 ---
 
-## 🏪 Play Store par publish (kamai ke liye zaroori)
-
-1. **Google Play Console** account banao (ek baar **$25** fees).
-2. **Release APK/AAB** chahiye (debug nahi). Signed build banao:
-   - Keystore banao → `app/build.gradle` me `signingConfigs` add karo →
-     `./gradlew assembleRelease`.
-3. Play Console me app banao, screenshots + icon + description daalo, AdMob
-   se link karo, review ke liye bhejo. Approve hone me 1-7 din.
-
-> Pehli baar ke liye debug APK **direct phone install** karke test kar lo;
-> Play Store baad me.
+## 🏪 Play Store
+- `store-assets/PLAY_LISTING.md` — naam, description, keywords, screenshots plan
+- `store-assets/DATA_SAFETY.md` — Play Data Safety form ke jawab
+- `../PRIVACY_POLICY.md` — privacy policy (public host karke URL Play me daalo)
+- Release ke liye: keystore banao → `signingConfigs` add karo → `bundleRelease` (.aab)
 
 ---
 
-## 📁 Content kaise badlein / jodein
+## 📝 Content add/badalna
+Sirf **ek file**: `app/src/main/assets/web/data/content.js`
+- `items[]` me entry: `{id, type:"chalisa|aarti|mantra", title, deity, accent,
+  icon, status:"ready", text, keywords}`.
+- `status:"coming_soon"` wale me **verified** text daal ke `"ready"` kar do.
 
-Naya aarti / mantra / tyohar add karna ho to sirf **ek file** edit karo:
-`app/src/main/assets/web/data/content.js`
-
-- `paath[]`  → aarti / chalisa
-- `mantra[]` → mantra
-- `festivals[]` → vrat/tyohar (date `"YYYY-MM-DD"` format me)
-
-Design badalna ho: `assets/web/css/style.css`.
+Design: `assets/web/css/app.css`. Logic: `assets/web/js/app.js`.
 
 ---
 
-## ⚠️ Disclaimers
-
-- Tyohar ki tareekein **sanket (tentative)** hain — tithi ke hisaab se 1-2
-  din aage-peeche ho sakti hain. App me bhi ye note dikhta hai.
-- Sacred texts (Chalisa/Aarti/Mantra) shraddha se daale gaye hain; koi
-  galti dikhe to `content.js` me theek kar lena.
+## 🧪 Tests
+```bash
+node /tmp/webtest/bhakti_test.js   # 20 view+logic tests (jsdom)
+```

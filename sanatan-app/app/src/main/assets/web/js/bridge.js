@@ -1,0 +1,54 @@
+/* Bhakti Daily — safe wrapper around the native Android bridge (window.Android).
+ * Browser me (bina Android ke) sab methods no-op / sensible default return karte hain. */
+(function () {
+  "use strict";
+  function A() { return window.Android || null; }
+  function call(fn, args, def) {
+    try {
+      var a = A();
+      if (a && typeof a[fn] === "function") return a[fn].apply(a, args || []);
+    } catch (e) {}
+    return def;
+  }
+
+  var Bridge = {
+    isNative: function () { return !!A(); },
+
+    // Ads
+    maybeInterstitial: function () { call("onNavigate"); },
+    showInterstitial: function () { call("showInterstitial"); },
+    setAdsEnabled: function (on) { call("setAdsEnabled", [!!on]); },
+
+    // Sharing
+    shareText: function (text) {
+      if (call("shareText", [String(text)], "__none__") === "__none__") {
+        // Web fallback
+        if (navigator.share) { try { navigator.share({ text: String(text) }); } catch (e) {} }
+      }
+    },
+    shareImage: function (dataUrl, caption) {
+      var b64 = String(dataUrl).replace(/^data:image\/\w+;base64,/, "");
+      call("shareImage", [b64, String(caption || "")]);
+    },
+
+    // Reminders
+    setReminders: function (arr) { call("setReminders", [JSON.stringify(arr)]); },
+    getReminders: function () {
+      var s = call("getReminders", [], null);
+      if (!s) return null;
+      try { return JSON.parse(s); } catch (e) { return null; }
+    },
+    requestNotificationPermission: function () { call("requestNotificationPermission"); },
+    hasNotificationPermission: function () { return call("hasNotificationPermission", [], true) === true; },
+
+    // Analytics
+    logEvent: function (name, params) { call("logEvent", [String(name), JSON.stringify(params || {})]); },
+
+    // Routing / misc
+    getInitialRoute: function () { return call("getInitialRoute", [], "") || ""; },
+    vibrate: function (ms) { call("vibrate", [ms | 0]); },
+    openPlayStore: function () { call("openPlayStore"); },
+  };
+
+  window.Bridge = Bridge;
+})();
