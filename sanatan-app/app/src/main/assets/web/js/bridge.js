@@ -69,6 +69,17 @@
       if (call("copyText", [String(text)], "__none__") === "__none__") {
         try { if (navigator.clipboard) navigator.clipboard.writeText(String(text)); } catch (e) {}
       }
+    },
+    // Text-to-speech (device Hindi voice) — no audio files needed
+    speak: function (text) {
+      if (call("speak", [String(text)], "__none__") === "__none__") {
+        try { if (window.speechSynthesis) { var u = new SpeechSynthesisUtterance(String(text)); u.lang = "hi-IN"; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); } } catch (e) {}
+      }
+    },
+    stopSpeak: function () {
+      if (call("stopSpeak", [], "__none__") === "__none__") {
+        try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+      }
     }
   };
 

@@ -346,3 +346,26 @@ body.reading #bottomNav, body.focus-mode #bottomNav { display: none; }
 .name-input { width: 100%; margin: 14px 0 4px; background: var(--surface-2); border: 1.5px solid var(--border);
   border-radius: 12px; padding: 13px 16px; font-size: 17px; color: var(--text); outline: none; text-align: center; }
 .name-input:focus { border-color: var(--saffron); }
+
+/* ===================== muhurat / choghadiya ===================== */
+.citybar { background: var(--surface); border-radius: 12px; box-shadow: var(--shadow-sm); margin-bottom: 12px; }
+.mh-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; font-weight: 700; color: var(--muted); margin-bottom: 12px; padding: 0 4px; }
+.mh-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mh-card { border-radius: 14px; padding: 14px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 3px; }
+.mh-card b { font-size: 14px; } .mh-card span { font-size: 17px; font-weight: 800; } .mh-card small { font-size: 11px; opacity: .8; }
+.mh-card.good { background: #e7f6ec; color: #17663a; }
+.mh-card.bad { background: #fdeaea; color: #a12525; }
+:root[data-theme="dark"] .mh-card.good, :root:not([data-theme="light"]) .mh-card.good { background: #143026; color: #7fe0a6; }
+:root[data-theme="dark"] .mh-card.bad, :root:not([data-theme="light"]) .mh-card.bad { background: #331717; color: #f0a0a0; }
+.ch-list { display: flex; flex-direction: column; gap: 7px; }
+.ch-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 11px; padding: 11px 13px; box-shadow: var(--shadow-sm); }
+.ch-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.ch-row.g .ch-dot { background: #2e9e5b; } .ch-row.b .ch-dot { background: #d64545; }
+.ch-name { font-weight: 700; font-size: 14.5px; }
+.ch-time { margin-left: auto; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ch-row.now { border: 2px solid var(--saffron); }
+.ch-badge { background: var(--saffron); color: #fff; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
+
+/* ---- TTS listen bar ---- */
+.tts-info { display: flex; flex-direction: column; }
+.tts-info b { font-size: 14px; } .tts-info small { font-size: 11.5px; color: var(--muted); }

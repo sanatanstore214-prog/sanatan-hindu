@@ -14,6 +14,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -51,6 +53,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.Locale;
 
 /**
  * Bhakti Daily — WebView host + AdMob + native bridge (reminders, share,
@@ -69,6 +72,8 @@ public class MainActivity extends AppCompatActivity {
     private int navCount = 0;
     private boolean adsEnabled = true;
     private String pendingRoute = null;
+    private TextToSpeech tts;
+    private boolean ttsReady = false;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -86,6 +91,29 @@ public class MainActivity extends AppCompatActivity {
         webView.loadUrl("https://appassets.androidx.org/assets/web/index.html");
 
         initAdsSafely();
+        initTts();
+    }
+
+    private void initTts() {
+        try {
+            tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+                @Override public void onInit(int status) {
+                    if (status == TextToSpeech.SUCCESS && tts != null) {
+                        try { tts.setLanguage(new Locale("hi", "IN")); } catch (Throwable ignored) {}
+                        ttsReady = true;
+                        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                            @Override public void onStart(String id) {}
+                            @Override public void onDone(String id) { notifyTtsDone(); }
+                            @Override public void onError(String id) { notifyTtsDone(); }
+                        });
+                    }
+                }
+            });
+        } catch (Throwable t) { Log.w(TAG, "tts init: " + t.getMessage()); }
+    }
+    private void notifyTtsDone() {
+        if (webView == null) return;
+        runOnUiThread(() -> { try { webView.evaluateJavascript("window.__ttsDone&&window.__ttsDone()", null); } catch (Throwable ignored) {} });
     }
 
     @Override
@@ -321,6 +349,16 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Throwable ignored) {}
             });
         }
+        @JavascriptInterface public void speak(String text) {
+            try {
+                if (!ttsReady || tts == null || text == null) return;
+                String t = text.length() > 3900 ? text.substring(0, 3900) : text;
+                tts.speak(t, TextToSpeech.QUEUE_FLUSH, null, "bhakti");
+            } catch (Throwable ignored) {}
+        }
+        @JavascriptInterface public void stopSpeak() {
+            try { if (tts != null) tts.stop(); } catch (Throwable ignored) {}
+        }
     }
 
     @Override
@@ -337,5 +375,9 @@ public class MainActivity extends AppCompatActivity {
     }
     @Override protected void onPause() { if (bannerAd != null) bannerAd.pause(); super.onPause(); }
     @Override protected void onResume() { super.onResume(); if (bannerAd != null) bannerAd.resume(); }
-    @Override protected void onDestroy() { if (bannerAd != null) bannerAd.destroy(); super.onDestroy(); }
+    @Override protected void onDestroy() {
+        if (bannerAd != null) bannerAd.destroy();
+        try { if (tts != null) { tts.stop(); tts.shutdown(); } } catch (Throwable ignored) {}
+        super.onDestroy();
+    }
 }

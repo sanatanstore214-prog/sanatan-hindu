@@ -125,16 +125,20 @@
     H /= 15;
     var T = H + RA - 0.06571 * t - 6.622;
     var UT = rev((T - lngHour) * 15) / 15;
-    var local = UT + TZ;
-    local = (local + 24) % 24;
-    var hh = Math.floor(local), mm = Math.round((local - hh) * 60);
+    return (UT + TZ + 24) % 24; // local hours (float), 0..24
+  }
+
+  function toHM(h) {
+    if (h == null) return null;
+    h = (h + 24) % 24;
+    var hh = Math.floor(h), mm = Math.round((h - hh) * 60);
     if (mm === 60) { mm = 0; hh = (hh + 1) % 24; }
     return (hh < 10 ? "0" : "") + hh + ":" + (mm < 10 ? "0" : "") + mm;
   }
 
   function sunTimes(date, cityKey) {
     var c = CITIES[cityKey] || CITIES.delhi;
-    return { city: c.name, sunrise: calcSun(date, c.lat, c.lon, true), sunset: calcSun(date, c.lat, c.lon, false) };
+    return { city: c.name, sunrise: toHM(calcSun(date, c.lat, c.lon, true)), sunset: toHM(calcSun(date, c.lat, c.lon, false)) };
   }
 
   function vikramSamvat(date) {
@@ -142,8 +146,33 @@
     return (date.getMonth() >= 3 ? y + 57 : y + 56);
   }
 
+  // ---- Choghadiya + Rahu Kaal + Abhijit (deterministic, from sunrise/sunset) ----
+  var CH_BASE = ["उद्वेग", "चर", "लाभ", "अमृत", "काल", "शुभ", "रोग"];
+  var CH_GOOD = { "अमृत": 1, "शुभ": 1, "लाभ": 1, "चर": 1 };
+  var RAHU = [7, 1, 6, 4, 5, 3, 2]; // Sun..Sat: which 1/8 of daytime
+
+  function choghadiya(date, cityKey) {
+    var c = CITIES[cityKey] || CITIES.delhi;
+    var sr = calcSun(date, c.lat, c.lon, true), ss = calcSun(date, c.lat, c.lon, false);
+    if (sr == null || ss == null) return null;
+    var dayLen = ss - sr; if (dayLen < 0) dayLen += 24;
+    var wd = date.getDay(), daySlot = dayLen / 8;
+    var dayStart = (wd * 3) % 7, day = [];
+    for (var i = 0; i < 8; i++) { var tp = CH_BASE[(dayStart + i) % 7], s = sr + i * daySlot; day.push({ name: tp, good: !!CH_GOOD[tp], start: toHM(s), end: toHM(s + daySlot) }); }
+    var next = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+    var nsr = calcSun(next, c.lat, c.lon, true);
+    var nightLen = (nsr != null) ? (24 - ss + nsr) : (24 - dayLen);
+    var nightSlot = nightLen / 8, nightStart = (wd * 3 + 5) % 7, night = [];
+    for (var j = 0; j < 8; j++) { var t2 = CH_BASE[(nightStart + j) % 7], s2 = ss + j * nightSlot; night.push({ name: t2, good: !!CH_GOOD[t2], start: toHM(s2), end: toHM(s2 + nightSlot) }); }
+    var rs = sr + RAHU[wd] * daySlot;
+    var mid = sr + dayLen / 2, half = dayLen / 30;
+    return { city: c.name, sunrise: toHM(sr), sunset: toHM(ss), day: day, night: night,
+      rahu: { start: toHM(rs), end: toHM(rs + daySlot) },
+      abhijit: { start: toHM(mid - half), end: toHM(mid + half) } };
+  }
+
   window.Panchang = {
     tithi: tithi, moonEmoji: moonEmoji, sunTimes: sunTimes,
-    vikramSamvat: vikramSamvat, cities: CITIES
+    vikramSamvat: vikramSamvat, cities: CITIES, choghadiya: choghadiya
   };
 })();

@@ -69,7 +69,9 @@
   }
 
   function render() {
-    stopAutoScroll(); _focus = false;
+    stopAutoScroll(); stopAudio();
+    try { if (window._ttsOn) { Bridge.stopSpeak(); window._ttsOn = false; } } catch (e) {}
+    _focus = false;
     document.body.classList.remove("focus-mode", "reading");
     var r = parseRoute();
     if (r.name === "read") return viewReader(r.id);
@@ -86,6 +88,7 @@
     if (r.name === "settings") return viewSettings();
     if (r.name === "wall") return viewWallpapers();
     if (r.name === "blessing") return viewBlessing();
+    if (r.name === "muhurat") return viewMuhurat();
     return viewHome();
   }
 
@@ -129,10 +132,13 @@
     } catch (e) { pan = ""; }
 
     var h = '<div class="screen">';
+    var muhuratRow = '<button class="row-card" data-go="muhurat"><span class="row-ico" style="background:#5C6BC022;color:#5C6BC0">🕐</span>' +
+      '<span class="row-body"><b>आज का शुभ मुहूर्त</b><small>चौघड़िया · राहु काल · अभिजित</small></span><span class="chev">›</span></button>';
     h += '<section class="hero compact"><div class="hero-top"><span class="hero-ico">' + g.ico + '</span>' +
       '<div><div class="hero-greet">' + esc(g.t) + '</div><div class="hero-date">आज का सनातन</div></div>' +
       '<button class="streak-chip" data-go="streak">🔥 ' + (st.count || 0) + '</button></div></section>';
     h += pan;
+    h += muhuratRow;
 
     h += '<div class="sec-label">आज की भक्ति</div>';
     h += '<button class="today-card" data-open="' + esc(t.id) + '" style="--accent:' + t.accent + '">' +
@@ -198,6 +204,35 @@
       '<div class="modal-btns"><button class="pill" data-act="skip-name">बाद में</button>' +
       '<button class="cta-btn" data-act="save-name">सेव करें</button></div></div>');
     setTimeout(function () { try { $("#nameInput").focus(); } catch (e) {} }, 120);
+  }
+
+  // ================= MUHURAT (choghadiya / rahu kaal) =================
+  function viewMuhurat() {
+    setNav("home"); setHeader({ title: "आज का मुहूर्त", back: true });
+    var ch = null; try { ch = Panchang.choghadiya(new Date(), Store.getCity()); } catch (e) {}
+    if (!ch) { content.innerHTML = '<div class="screen"><div class="empty"><div class="empty-ico">🕐</div><p>मुहूर्त गणना उपलब्ध नहीं।</p></div></div>'; return; }
+    var nowHM = pad(new Date().getHours()) + ":" + pad(new Date().getMinutes());
+    function inSlot(s) { return s.start <= nowHM && nowHM < s.end; }
+    var h = '<div class="screen">';
+    h += '<button class="set-row link-row citybar" data-act="city"><span>📍 ' + esc(ch.city) + '</span><span class="chev">बदलें ›</span></button>';
+    h += '<div class="mh-top"><span>🌅 सूर्योदय ' + ch.sunrise + '</span><span>🌇 सूर्यास्त ' + ch.sunset + '</span></div>';
+    h += '<div class="mh-cards"><div class="mh-card good"><b>✅ अभिजित मुहूर्त</b><span>' + ch.abhijit.start + ' – ' + ch.abhijit.end + '</span><small>दिन का श्रेष्ठ समय</small></div>' +
+      '<div class="mh-card bad"><b>⛔ राहु काल</b><span>' + ch.rahu.start + ' – ' + ch.rahu.end + '</span><small>शुभ कार्य टालें</small></div></div>';
+    h += '<div class="sec-label">दिन का चौघड़िया</div>' + chList(ch.day, inSlot);
+    h += '<div class="sec-label">रात का चौघड़िया</div>' + chList(ch.night, function () { return false; });
+    h += '<p class="disclaimer">⚠️ समय ganitiy (approx) hain — sthaniya panchang se pushti karein.</p></div>';
+    content.innerHTML = h; content.scrollTop = 0;
+    Analytics.track("muhurat_opened", {});
+  }
+  function chList(arr, inSlot) {
+    var h = '<div class="ch-list">';
+    each(arr, function (s) {
+      var cur = inSlot(s);
+      h += '<div class="ch-row ' + (s.good ? 'g' : 'b') + (cur ? ' now' : '') + '"><span class="ch-dot"></span>' +
+        '<span class="ch-name">' + esc(s.name) + '</span><span class="ch-time">' + s.start + ' – ' + s.end + '</span>' +
+        (cur ? '<span class="ch-badge">अभी</span>' : '') + '</div>';
+    });
+    return h + '</div>';
   }
 
   function tile(ico, label, route, color) { return '<button class="tile" data-go="' + route + '" style="--c:' + color + '"><span class="tile-ico">' + ico + '</span><span>' + esc(label) + '</span></button>'; }
@@ -363,7 +398,7 @@
     document.body.classList.add("reading");
     var audioBlock = it.audio
       ? '<div class="audio-bar" id="audioBar"><button class="au-btn" data-act="audio-toggle">▶</button><div class="au-track"><i id="auProg"></i></div><span id="auTime">0:00</span></div>'
-      : '<div class="audio-bar disabled">🔊 ऑडियो जल्द आ रहा है</div>';
+      : '<div class="audio-bar" id="ttsBar"><button class="au-btn" data-act="tts-toggle" id="ttsBtn">🔊</button><div class="tts-info"><b>सुनें</b><small>फोन की आवाज़ में पाठ सुनें</small></div></div>';
     var h = '<div class="screen reader"><div class="read-progress"><i id="readBar"></i></div>' +
       '<h1 class="read-title" style="color:' + it.accent + '">' + esc(it.title) + '</h1>' +
       (it.subtitle ? '<div class="read-sub">' + esc(it.subtitle) + '</div>' : '') +
@@ -613,6 +648,12 @@
     if (act === "focus") { _focus = !_focus; document.body.classList.toggle("focus-mode", _focus); Bridge.setAdsEnabled(!_focus && !Store.isPremium()); return; }
     if (act === "autoscroll") { toggleAutoScroll(); return; }
     if (act === "audio-toggle") { toggleAudio(); return; }
+    if (act === "tts-toggle") {
+      var tb = $("#ttsBtn");
+      if (window._ttsOn) { Bridge.stopSpeak(); window._ttsOn = false; if (tb) tb.textContent = "🔊"; }
+      else if (_curItem) { Bridge.speak(_curItem.text); window._ttsOn = true; if (tb) tb.textContent = "⏸"; toast("🔊 सुनाई दे रहा है… (फोन में Hindi voice ज़रूरी)"); Analytics.track("audio_play", { id: _curItem.id, via: "tts" }); }
+      return;
+    }
     if (act === "fav") { var added = Store.toggleFav(el.getAttribute("data-id")); el.className = "pill" + (added ? " on" : ""); el.innerHTML = (added ? "★" : "☆") + " पसंद"; Analytics.track("favorite_added", { added: added }); toast(added ? "★ पसंदीदा में जोड़ा" : "हटाया"); return; }
     if (act === "copy") { var ci = item(el.getAttribute("data-id")); Bridge.copyText(ci.title + "\n\n" + ci.text); toast("कॉपी हो गया ⧉"); return; }
     if (act === "share") { shareItemText(item(el.getAttribute("data-id"))); return; }
@@ -663,6 +704,8 @@
     var t = e.target; if (t && t.getAttribute && t.getAttribute("data-act") === "share-milestone") { try { ShareCard.shareMilestone(t.getAttribute("data-d")); } catch (x) {} } });
 
   // ================= boot =================
+  window.__ttsDone = function () { window._ttsOn = false; var b = document.getElementById("ttsBtn"); if (b) b.textContent = "🔊"; };
+
   function boot() {
     applyAppearance();
     Bridge.setAdsEnabled(!Store.isPremium());
