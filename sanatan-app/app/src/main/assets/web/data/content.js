@@ -1,8 +1,7 @@
-/* Bhakti Daily — content catalog (auto-generated + verified).
- * Naya path/mantra add karna ho to items[] me entry jodo.
- * status:'coming_soon' wale me verified text baad me daala jayega. */
+/* Bhakti Daily 3.0 — content catalog (verified text only; coming_soon me baad me).
+ * items[] me entry jodo; festivals enriched with deity/info/greeting/related. */
 window.BHAKTI_DATA = {
-  "version": 2,
+  "version": 3,
   "thoughts": [
     "कर्म करो, फल की चिंता मत करो। — श्रीमद्भगवद्गीता",
     "जैसा अन्न, वैसा मन। शुद्ध भोजन, शुद्ध विचार।",
@@ -125,7 +124,8 @@ window.BHAKTI_DATA = {
         "hanuman chalisa",
         "हनुमान",
         "चालीसा"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "ganesh-aarti",
@@ -143,7 +143,8 @@ window.BHAKTI_DATA = {
         "aarti",
         "गणेश",
         "आरती"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "om-jai-jagdish",
@@ -162,7 +163,8 @@ window.BHAKTI_DATA = {
         "om jai",
         "विष्णु",
         "आरती"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "shiv-aarti",
@@ -181,7 +183,8 @@ window.BHAKTI_DATA = {
         "aarti",
         "शिव",
         "आरती"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "durga-aarti",
@@ -200,7 +203,8 @@ window.BHAKTI_DATA = {
         "aarti",
         "दुर्गा",
         "आरती"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "lakshmi-aarti",
@@ -218,7 +222,8 @@ window.BHAKTI_DATA = {
         "aarti",
         "लक्ष्मी",
         "आरती"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "gayatri",
@@ -235,7 +240,8 @@ window.BHAKTI_DATA = {
         "gayatri",
         "गायत्री",
         "mantra"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "mahamrityunjaya",
@@ -253,7 +259,8 @@ window.BHAKTI_DATA = {
         "महामृत्युंजय",
         "shiv",
         "mantra"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "ganesh-mantra",
@@ -271,7 +278,8 @@ window.BHAKTI_DATA = {
         "vakratunda",
         "गणेश",
         "mantra"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "shanti-mantra",
@@ -289,7 +297,8 @@ window.BHAKTI_DATA = {
         "peace",
         "शांति",
         "mantra"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "om-namah-shivaya",
@@ -307,7 +316,8 @@ window.BHAKTI_DATA = {
         "namah shivaya",
         "शिव",
         "mantra"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "hare-krishna",
@@ -325,7 +335,8 @@ window.BHAKTI_DATA = {
         "hare krishna",
         "कृष्ण",
         "mantra"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "saraswati-mantra",
@@ -342,7 +353,8 @@ window.BHAKTI_DATA = {
         "saraswati",
         "सरस्वती",
         "mantra"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "hanuman-mantra",
@@ -359,7 +371,8 @@ window.BHAKTI_DATA = {
         "hanuman",
         "हनुमान",
         "mantra"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "ram-mantra",
@@ -376,7 +389,8 @@ window.BHAKTI_DATA = {
         "ram",
         "राम",
         "mantra"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "krishna-mantra",
@@ -394,7 +408,8 @@ window.BHAKTI_DATA = {
         "कृष्ण",
         "vasudev",
         "mantra"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "shani-mantra",
@@ -411,7 +426,8 @@ window.BHAKTI_DATA = {
         "shani",
         "शनि",
         "mantra"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "durga-chalisa",
@@ -427,7 +443,8 @@ window.BHAKTI_DATA = {
         "श्री दुर्गा चालीसा",
         "durga",
         "durga-chalisa"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "shiv-chalisa",
@@ -443,7 +460,8 @@ window.BHAKTI_DATA = {
         "श्री शिव चालीसा",
         "shiv",
         "shiv-chalisa"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "ganesh-chalisa",
@@ -459,7 +477,8 @@ window.BHAKTI_DATA = {
         "श्री गणेश चालीसा",
         "ganesh",
         "ganesh-chalisa"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "ram-chalisa",
@@ -475,7 +494,8 @@ window.BHAKTI_DATA = {
         "श्री राम चालीसा",
         "ram",
         "ram-chalisa"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "krishna-chalisa",
@@ -491,7 +511,8 @@ window.BHAKTI_DATA = {
         "श्री कृष्ण चालीसा",
         "krishna",
         "krishna-chalisa"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "saraswati-chalisa",
@@ -507,7 +528,8 @@ window.BHAKTI_DATA = {
         "श्री सरस्वती चालीसा",
         "saraswati",
         "saraswati-chalisa"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "lakshmi-chalisa",
@@ -523,7 +545,8 @@ window.BHAKTI_DATA = {
         "श्री लक्ष्मी चालीसा",
         "lakshmi",
         "lakshmi-chalisa"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "shani-chalisa",
@@ -539,7 +562,8 @@ window.BHAKTI_DATA = {
         "श्री शनि चालीसा",
         "shani",
         "shani-chalisa"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "hanuman-aarti",
@@ -555,7 +579,8 @@ window.BHAKTI_DATA = {
         "श्री हनुमान आरती",
         "hanuman",
         "hanuman-aarti"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "ram-aarti",
@@ -571,7 +596,8 @@ window.BHAKTI_DATA = {
         "श्री राम आरती",
         "ram",
         "ram-aarti"
-      ]
+      ],
+      "audio": ""
     },
     {
       "id": "krishna-aarti",
@@ -587,99 +613,224 @@ window.BHAKTI_DATA = {
         "श्री कृष्ण आरती",
         "krishna",
         "krishna-aarti"
-      ]
+      ],
+      "audio": ""
     }
   ],
   "festivals": [
     {
       "date": "2026-01-14",
       "name": "मकर संक्रांति",
-      "note": "स्नान-दान का पर्व"
+      "note": "स्नान-दान का पर्व",
+      "deity": "surya",
+      "accent": "#EF6C00",
+      "related": [
+        "gayatri"
+      ],
+      "info": "सूर्य के मकर राशि में प्रवेश का पर्व। स्नान, दान और तिल-गुड़ का विशेष महत्व।",
+      "greeting": "मकर संक्रांति की हार्दिक शुभकामनाएँ! तिल-गुड़ की मिठास आपके जीवन में सुख लाए। 🪁"
     },
     {
       "date": "2026-01-23",
       "name": "वसंत पंचमी",
-      "note": "सरस्वती पूजा"
+      "note": "सरस्वती पूजा",
+      "deity": "saraswati",
+      "accent": "#F9A825",
+      "related": [
+        "saraswati-mantra"
+      ],
+      "info": "माँ सरस्वती की आराधना का दिन — विद्या, बुद्धि व कला का पर्व। पीले वस्त्र व पीले पकवान।",
+      "greeting": "वसंत पंचमी की शुभकामनाएँ! माँ सरस्वती आपको ज्ञान व बुद्धि दें। 📖"
     },
     {
       "date": "2026-02-15",
       "name": "महाशिवरात्रि",
-      "note": "शिव उपासना, व्रत"
+      "note": "शिव उपासना, व्रत",
+      "deity": "shiv",
+      "accent": "#5C6BC0",
+      "related": [
+        "shiv-aarti",
+        "om-namah-shivaya",
+        "mahamrityunjaya"
+      ],
+      "info": "भगवान शिव की महारात्रि — व्रत, जागरण व शिवलिंग पर जल/बेलपत्र अर्पण का पर्व।",
+      "greeting": "महाशिवरात्रि की हार्दिक शुभकामनाएँ! भोलेनाथ की कृपा आप पर बनी रहे। 🔱 ॐ नमः शिवाय"
     },
     {
       "date": "2026-03-03",
       "name": "होलिका दहन",
-      "note": ""
+      "note": "",
+      "deity": "devi",
+      "accent": "#AD1457",
+      "related": [],
+      "info": "बुराई पर अच्छाई की विजय का प्रतीक — होली से एक रात पहले होलिका दहन।",
+      "greeting": "होलिका दहन की शुभकामनाएँ! बुराई जले, अच्छाई की विजय हो। 🔥"
     },
     {
       "date": "2026-03-04",
       "name": "होली",
-      "note": "रंगों का त्योहार"
+      "note": "रंगों का त्योहार",
+      "deity": "krishna",
+      "accent": "#1565C0",
+      "related": [
+        "hare-krishna",
+        "krishna-mantra"
+      ],
+      "info": "रंगों का त्योहार — प्रेम, उल्लास और भाईचारे का पर्व।",
+      "greeting": "होली की रंगभरी शुभकामनाएँ! आपका जीवन खुशियों के रंगों से भर जाए। 🌈"
     },
     {
       "date": "2026-03-26",
       "name": "राम नवमी",
-      "note": "श्रीराम जन्मोत्सव"
+      "note": "श्रीराम जन्मोत्सव",
+      "deity": "ram",
+      "accent": "#2E7D32",
+      "related": [
+        "ram-mantra",
+        "hanuman-chalisa"
+      ],
+      "info": "भगवान श्रीराम का जन्मोत्सव — चैत्र शुक्ल नवमी।",
+      "greeting": "राम नवमी की हार्दिक शुभकामनाएँ! प्रभु श्रीराम आपके जीवन में मर्यादा व सुख लाएँ। 🏹 जय श्री राम"
     },
     {
       "date": "2026-04-01",
       "name": "हनुमान जयंती",
-      "note": ""
+      "note": "",
+      "deity": "hanuman",
+      "accent": "#E8590C",
+      "related": [
+        "hanuman-chalisa",
+        "hanuman-mantra"
+      ],
+      "info": "हनुमान जी का जन्मोत्सव — बल, भक्ति व साहस का पर्व।",
+      "greeting": "हनुमान जयंती की शुभकामनाएँ! बजरंगबली आपको बल व निर्भयता दें। 🚩 जय बजरंगबली"
     },
     {
       "date": "2026-04-20",
       "name": "अक्षय तृतीया",
-      "note": "शुभ खरीदारी"
+      "note": "शुभ खरीदारी",
+      "deity": "lakshmi",
+      "accent": "#C9A227",
+      "related": [
+        "lakshmi-aarti"
+      ],
+      "info": "शुभ कार्यों व खरीदारी के लिए अत्यंत शुभ दिन माना जाता है।",
+      "greeting": "अक्षय तृतीया की शुभकामनाएँ! आपके घर सुख-समृद्धि का वास हो। 🪙"
     },
     {
       "date": "2026-08-28",
       "name": "रक्षाबंधन",
-      "note": ""
+      "note": "",
+      "deity": "devi",
+      "accent": "#AD1457",
+      "related": [],
+      "info": "भाई-बहन के प्रेम व रक्षा के संकल्प का पर्व — राखी बाँधने की परंपरा।",
+      "greeting": "रक्षाबंधन की हार्दिक शुभकामनाएँ! भाई-बहन का स्नेह सदा बना रहे। 🧵"
     },
     {
       "date": "2026-09-04",
       "name": "कृष्ण जन्माष्टमी",
-      "note": "श्रीकृष्ण जन्मोत्सव"
+      "note": "श्रीकृष्ण जन्मोत्सव",
+      "deity": "krishna",
+      "accent": "#1565C0",
+      "related": [
+        "krishna-mantra",
+        "hare-krishna"
+      ],
+      "info": "भगवान श्रीकृष्ण का जन्मोत्सव — भाद्रपद कृष्ण अष्टमी, मध्यरात्रि पूजन।",
+      "greeting": "जन्माष्टमी की हार्दिक शुभकामनाएँ! नंदलाल की कृपा आप पर बनी रहे। 🦚 जय श्री कृष्ण"
     },
     {
       "date": "2026-09-14",
       "name": "गणेश चतुर्थी",
-      "note": "गणपति स्थापना"
+      "note": "गणपति स्थापना",
+      "deity": "ganesh",
+      "accent": "#F57C00",
+      "related": [
+        "ganesh-aarti",
+        "ganesh-mantra"
+      ],
+      "info": "गणपति बप्पा का स्थापना पर्व — विघ्नहर्ता की आराधना, मोदक का भोग।",
+      "greeting": "गणेश चतुर्थी की शुभकामनाएँ! बप्पा आपके सभी विघ्न हरें। 🐘 गणपति बप्पा मोरया"
     },
     {
       "date": "2026-10-11",
       "name": "शारदीय नवरात्रि आरंभ",
-      "note": "घटस्थापना"
+      "note": "घटस्थापना",
+      "deity": "durga",
+      "accent": "#C2185B",
+      "related": [
+        "durga-aarti"
+      ],
+      "info": "माँ दुर्गा के नौ रूपों की आराधना के नौ दिन — घटस्थापना से आरंभ।",
+      "greeting": "नवरात्रि की हार्दिक शुभकामनाएँ! माँ दुर्गा आपकी रक्षा करें। 🌺 जय माता दी"
     },
     {
       "date": "2026-10-20",
       "name": "दशहरा (विजयादशमी)",
-      "note": ""
+      "note": "",
+      "deity": "ram",
+      "accent": "#2E7D32",
+      "related": [
+        "ram-mantra",
+        "durga-aarti"
+      ],
+      "info": "असत्य पर सत्य की विजय — रावण दहन व शस्त्र पूजन का पर्व।",
+      "greeting": "विजयादशमी की शुभकामनाएँ! असत्य पर सत्य की सदा विजय हो। 🏹"
     },
     {
       "date": "2026-10-29",
       "name": "करवा चौथ",
-      "note": ""
+      "note": "",
+      "deity": "devi",
+      "accent": "#AD1457",
+      "related": [],
+      "info": "सुहागिनों का व्रत — चंद्र दर्शन के बाद व्रत खोलने की परंपरा।",
+      "greeting": "करवा चौथ की शुभकामनाएँ! आपका दांपत्य जीवन सुखमय रहे। 🌙"
     },
     {
       "date": "2026-11-08",
       "name": "दीपावली",
-      "note": "लक्ष्मी पूजन"
+      "note": "लक्ष्मी पूजन",
+      "deity": "lakshmi",
+      "accent": "#C9A227",
+      "related": [
+        "lakshmi-aarti"
+      ],
+      "info": "प्रकाश का पर्व — माँ लक्ष्मी व गणेश पूजन, दीप व रंगोली।",
+      "greeting": "दीपावली की हार्दिक शुभकामनाएँ! माँ लक्ष्मी आपके घर सुख-समृद्धि लाएँ। 🪔 शुभ दीपावली"
     },
     {
       "date": "2026-11-09",
       "name": "गोवर्धन पूजा",
-      "note": ""
+      "note": "",
+      "deity": "krishna",
+      "accent": "#1565C0",
+      "related": [
+        "krishna-mantra"
+      ],
+      "info": "भगवान कृष्ण द्वारा गोवर्धन पर्वत उठाने की स्मृति — अन्नकूट पर्व।",
+      "greeting": "गोवर्धन पूजा की शुभकामनाएँ! 🐄 जय श्री कृष्ण"
     },
     {
       "date": "2026-11-10",
       "name": "भाई दूज",
-      "note": ""
+      "note": "",
+      "deity": "devi",
+      "accent": "#AD1457",
+      "related": [],
+      "info": "भाई-बहन के स्नेह का पर्व — बहन भाई को तिलक कर मंगल कामना करती है।",
+      "greeting": "भाई दूज की हार्दिक शुभकामनाएँ! भाई-बहन का प्रेम अमर रहे। 🙏"
     },
     {
       "date": "2026-11-15",
       "name": "छठ पूजा",
-      "note": ""
+      "note": "",
+      "deity": "surya",
+      "accent": "#EF6C00",
+      "related": [],
+      "info": "सूर्य देव व छठी मैया की उपासना — उगते व डूबते सूर्य को अर्घ्य।",
+      "greeting": "छठ पूजा की शुभकामनाएँ! छठी मैया आपके परिवार को सुख दें। 🌅"
     }
   ]
 };

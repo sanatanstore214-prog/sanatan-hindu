@@ -57,8 +57,10 @@ Everyone
 "रोज़ इसी समय भक्ति का स्मरण भेजने के लिए नोटिफिकेशन की अनुमति दें।
 आप कभी भी बंद कर सकते हैं।"
 
-## What's new (release notes v2.0)
-• Naya premium design + Dark mode
-• Daily bhakti reminder + streak
-• Search, favorites, share cards
-• Focus reading mode
+## What's new (release notes v3.0)
+• 🆕 "आज का सनातन" home — पंचांग (तिथि, सूर्योदय/सूर्यास्त), आज की भक्ति
+• 🆕 डिजिटल जाप काउंटर (11/21/51/108/1008)
+• 🆕 त्योहार mode — जानकारी + शुभकामना कार्ड + सम्बंधित पाठ
+• 🆕 देवोत्सव वॉलपेपर — सेट / सेव / शेयर
+• 🆕 "मेरी भक्ति" dashboard + auto-scroll reading
+• Improved reminders, streak, share cards, Dark mode

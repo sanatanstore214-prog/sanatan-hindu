@@ -100,6 +100,50 @@
       return null;
     },
 
+    // ---- city (for panchang sun times) ----
+    getCity: function () { return read("city", "delhi"); },
+    setCity: function (k) { write("city", k); },
+
+    // ---- Jaap counter ----
+    getJaapTarget: function () { return read("jaap_target", 108); },
+    setJaapTarget: function (n) { write("jaap_target", n); },
+    getJaap: function () {
+        var j = read("jaap", { count: 0, date: todayStr(), total: 0, rounds: 0 });
+        if (j.date !== todayStr()) { j.count = 0; j.date = todayStr(); write("jaap", j); }
+        return j;
+    },
+    jaapInc: function () {
+        var j = this.getJaap();
+        j.count = (j.count || 0) + 1;
+        j.total = (j.total || 0) + 1;
+        write("jaap", j);
+        return j;
+    },
+    jaapReset: function () {
+        var j = this.getJaap(); j.count = 0; write("jaap", j); return j;
+    },
+    jaapCompleteRound: function (target) {
+        var j = this.getJaap();
+        j.rounds = (j.rounds || 0) + 1;
+        j.count = 0;
+        write("jaap", j);
+        var h = read("jaap_history", []);
+        h.unshift({ date: todayStr(), target: target, ts: Date.now() });
+        if (h.length > 60) h = h.slice(0, 60);
+        write("jaap_history", h);
+        return j;
+    },
+    getJaapHistory: function () { return read("jaap_history", []); },
+
+    // ---- saved wallpapers (theme keys) ----
+    getSavedWallpapers: function () { return read("wallpapers", []); },
+    toggleWallpaper: function (key) {
+        var w = this.getSavedWallpapers(), i = w.indexOf(key);
+        if (i === -1) w.unshift(key); else w.splice(i, 1);
+        write("wallpapers", w);
+        return i === -1;
+    },
+
     // ---- premium entitlement (architecture; real IAP set up later) ----
     isPremium: function () { return read("premium", false) === true; },
     setPremium: function (v) { write("premium", !!v); },

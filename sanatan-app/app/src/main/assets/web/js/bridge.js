@@ -48,6 +48,21 @@
     getInitialRoute: function () { return call("getInitialRoute", [], "") || ""; },
     vibrate: function (ms) { call("vibrate", [ms | 0]); },
     openPlayStore: function () { call("openPlayStore"); },
+
+    // Wallpaper / save / clipboard
+    setWallpaper: function (dataUrl) {
+      var b64 = String(dataUrl).replace(/^data:image\/\w+;base64,/, "");
+      return call("setWallpaper", [b64], "__none__") !== "__none__";
+    },
+    saveImage: function (dataUrl, name) {
+      var b64 = String(dataUrl).replace(/^data:image\/\w+;base64,/, "");
+      return call("saveImage", [b64, String(name || "bhakti")], "__none__") !== "__none__";
+    },
+    copyText: function (text) {
+      if (call("copyText", [String(text)], "__none__") === "__none__") {
+        try { if (navigator.clipboard) navigator.clipboard.writeText(String(text)); } catch (e) {}
+      }
+    }
   };
 
   window.Bridge = Bridge;

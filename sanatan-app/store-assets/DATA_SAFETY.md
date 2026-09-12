@@ -36,7 +36,9 @@ Use these when filling the **Data safety** section in Play Console.
 | INTERNET / ACCESS_NETWORK_STATE | Load ads (content is offline) |
 | POST_NOTIFICATIONS | Daily bhakti reminders |
 | RECEIVE_BOOT_COMPLETED | Re-arm reminders after phone restart |
-| VIBRATE | Reminder vibration |
+| VIBRATE | Reminder + Jaap counter vibration |
+| SET_WALLPAPER | Set devotional wallpaper (user action only) |
+| WRITE_EXTERNAL_STORAGE (maxSdk 28) | Save wallpaper to gallery on Android 9 & below (Android 10+ uses scoped MediaStore, no permission) |
 | AD_ID (auto by AdMob) | Personalised/measured ads |
 
 ## Pre-launch checklist

@@ -92,5 +92,27 @@
       if (window.Bridge) window.Bridge.shareImage(url, caption);
       return url;
     },
+    shareQuote: function (text) {
+      var url = build({ title: "आज का विचार", accent: "#C9A227", snippet: text });
+      if (window.Bridge) window.Bridge.shareImage(url, text + "\n\n🚩 Bhakti Daily");
+      return url;
+    },
+    shareFestival: function (f) {
+      var url = build({ title: f.name, accent: f.accent || "#E8590C", snippet: f.greeting || (f.name + " की शुभकामनाएँ!") });
+      if (window.Bridge) window.Bridge.shareImage(url, (f.greeting || f.name) + "\n\n🚩 Bhakti Daily");
+      return url;
+    },
+    shareJaap: function (target, deityName, accent) {
+      var snip = "आज मैंने " + target + " बार जाप पूर्ण किया 🙏" + (deityName ? "\n" + deityName : "");
+      var url = build({ title: "🙏 जाप पूर्ण", accent: accent || "#E8590C", snippet: snip });
+      if (window.Bridge) window.Bridge.shareImage(url, snip + "\n\n🚩 Bhakti Daily — जाप काउंटर");
+      return url;
+    },
+    shareMilestone: function (days) {
+      var snip = "🔥 " + days + " दिन लगातार भक्ति!\nईश्वर सबका कल्याण करें।";
+      var url = build({ title: days + " दिन की भक्ति", accent: "#E8590C", snippet: snip });
+      if (window.Bridge) window.Bridge.shareImage(url, snip + "\n\n🚩 Bhakti Daily");
+      return url;
+    }
   };
 })();

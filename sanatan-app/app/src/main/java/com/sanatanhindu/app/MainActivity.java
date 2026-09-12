@@ -2,9 +2,18 @@ package com.sanatanhindu.app;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.WallpaperManager;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -41,6 +50,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 
 /**
  * Bhakti Daily — WebView host + AdMob + native bridge (reminders, share,
@@ -246,6 +256,46 @@ public class MainActivity extends AppCompatActivity {
                 catch (Throwable t) {
                     try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName()))); } catch (Throwable ignored) {}
                 }
+            });
+        }
+        @JavascriptInterface public boolean setWallpaper(String b64) {
+            try {
+                byte[] bytes = Base64.decode(b64, Base64.DEFAULT);
+                Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                WallpaperManager.getInstance(MainActivity.this).setBitmap(bmp);
+                return true;
+            } catch (Throwable t) { Log.w(TAG, "setWallpaper: " + t.getMessage()); return false; }
+        }
+        @JavascriptInterface public boolean saveImage(String b64, String name) {
+            try {
+                byte[] bytes = Base64.decode(b64, Base64.DEFAULT);
+                String fname = (name == null ? "bhakti" : name) + "_" + System.currentTimeMillis() + ".png";
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    ContentValues cv = new ContentValues();
+                    cv.put(MediaStore.Images.Media.DISPLAY_NAME, fname);
+                    cv.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+                    cv.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/BhaktiDaily");
+                    Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
+                    if (uri == null) return false;
+                    OutputStream os = getContentResolver().openOutputStream(uri);
+                    os.write(bytes); os.close();
+                    return true;
+                } else {
+                    File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "BhaktiDaily");
+                    if (!dir.exists()) dir.mkdirs();
+                    File f = new File(dir, fname);
+                    FileOutputStream fos = new FileOutputStream(f); fos.write(bytes); fos.close();
+                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(f)));
+                    return true;
+                }
+            } catch (Throwable t) { Log.w(TAG, "saveImage: " + t.getMessage()); return false; }
+        }
+        @JavascriptInterface public void copyText(String text) {
+            runOnUiThread(() -> {
+                try {
+                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("Bhakti Daily", text));
+                } catch (Throwable ignored) {}
             });
         }
     }
