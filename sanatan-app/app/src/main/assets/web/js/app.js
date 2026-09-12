@@ -4,7 +4,7 @@
   var DATA = window.BHAKTI_DATA || { items: [], festivals: [], thoughts: [], weekday: {}, deities: {} };
   var Store = window.Store, Analytics = window.Analytics || { track: function () {} },
       Bridge = window.Bridge, ShareCard = window.ShareCard, Panchang = window.Panchang,
-      Recommend = window.Recommend, Wallpaper = window.Wallpaper;
+      Recommend = window.Recommend, Wallpaper = window.Wallpaper, Blessing = window.Blessing;
 
   var HIN_MONTHS_F = ["जनवरी", "फरवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितम्बर", "अक्टूबर", "नवम्बर", "दिसम्बर"];
   var HIN_DAYS = ["रविवार", "सोमवार", "मंगलवार", "बुधवार", "गुरुवार", "शुक्रवार", "शनिवार"];
@@ -85,6 +85,7 @@
     if (r.name === "reminders") return viewReminders();
     if (r.name === "settings") return viewSettings();
     if (r.name === "wall") return viewWallpapers();
+    if (r.name === "blessing") return viewBlessing();
     return viewHome();
   }
 
@@ -140,6 +141,11 @@
       '<div class="today-title">' + esc(t.title) + '</div>' +
       '<div class="today-cta">' + (st.todayDone ? "✓ आज पूरा — फिर पढ़ें" : "अभी शुरू करें ›") + '</div></div></button>';
 
+    // WhatsApp daily-blessing CTA (organic install loop)
+    h += '<button class="bless-cta" data-act="open-blessing"><span class="bless-ico">🌅</span>' +
+      '<span class="bless-body"><b>आज का आशीर्वाद भेजें</b><small>' + (Store.getName() ? 'WhatsApp पर 1-tap शुभकामना 🙏' : 'नाम डालकर WhatsApp पर भेजें 🙏') + '</small></span>' +
+      '<span class="bless-wa">🟢 ›</span></button>';
+
     h += '<div class="tiles">' +
       tile("📿", "जाप", "jaap", "#E8590C") +
       tile("📚", "पुस्तकालय", "lib/chalisa", "#5C6BC0") +
@@ -166,7 +172,34 @@
     h += '</div>';
     content.innerHTML = h; content.scrollTop = 0;
     Analytics.track("app_open", {});
+    if (!Store.getName() && !Store.get("namePrompted", false)) { Store.set("namePrompted", true); setTimeout(showNameModal, 700); }
   }
+
+  // ================= DAILY BLESSING (WhatsApp loop) =================
+  function viewBlessing() {
+    setNav("home"); setHeader({ title: "आज का आशीर्वाद", back: true });
+    var name = Store.getName(), url = "";
+    try { url = Blessing.build({ name: name }); } catch (e) {}
+    var h = '<div class="screen bless-screen">';
+    h += url ? '<img class="bless-img" src="' + url + '" alt="आज का आशीर्वाद"/>' : '<div class="empty"><div class="empty-ico">🌅</div><p>आशीर्वाद यहाँ बनेगा।</p></div>';
+    h += '<button class="cta-btn wa" data-act="bless-wa">🟢 WhatsApp पर भेजें</button>' +
+      '<div class="modal-btns"><button class="pill" data-act="bless-share">↗ शेयर</button>' +
+      (Bridge.isNative() ? '<button class="pill" data-act="bless-save">⬇ सेव</button>' : '') +
+      '<button class="pill" data-act="edit-name">✍️ ' + (name ? "नाम बदलें" : "नाम जोड़ें") + '</button></div>' +
+      '<p class="muted small center">हर दिन नया आशीर्वाद अपने-आप बनेगा।' + (name ? '' : ' नाम डालने पर card पर आपका नाम आएगा 🙏') + '</p>';
+    h += '</div>';
+    content.innerHTML = h; content.scrollTop = 0;
+    Analytics.track("blessing_opened", {});
+  }
+  function showNameModal() {
+    modal('<div class="modal-card"><div class="m-ico">✍️</div><h2>अपना नाम डालें</h2>' +
+      '<p class="muted small">आशीर्वाद card पर "— [नाम] जी" आएगा — जिससे लोग पूछेंगे कौन-सा app 🙏</p>' +
+      '<input id="nameInput" class="name-input" type="text" maxlength="24" placeholder="आपका नाम" value="' + esc(Store.getName()) + '">' +
+      '<div class="modal-btns"><button class="pill" data-act="skip-name">बाद में</button>' +
+      '<button class="cta-btn" data-act="save-name">सेव करें</button></div></div>');
+    setTimeout(function () { try { $("#nameInput").focus(); } catch (e) {} }, 120);
+  }
+
   function tile(ico, label, route, color) { return '<button class="tile" data-go="' + route + '" style="--c:' + color + '"><span class="tile-ico">' + ico + '</span><span>' + esc(label) + '</span></button>'; }
   function miniCard(it) { return '<button class="mini" data-open="' + esc(it.id) + '" style="--accent:' + it.accent + '"><span class="mini-ico">' + it.icon + '</span><span class="mini-title">' + esc(it.title) + '</span><span class="mini-type">' + esc(TYPE_LABEL[it.type] || "") + '</span></button>'; }
 
@@ -520,7 +553,10 @@
     setNav("meri"); setHeader({ title: "सेटिंग", back: true });
     var s = Store.getSettings(), prem = Store.isPremium(), city = Store.getCity();
     var cityName = (Panchang.cities[city] || {}).name || city;
-    var h = '<div class="screen"><div class="sec-label">दिखावट</div><div class="card-group">' +
+    var h = '<div class="screen"><div class="sec-label">प्रोफ़ाइल</div><div class="card-group">' +
+      '<button class="set-row link-row" data-act="edit-name"><span>✍️ मेरा नाम</span><span class="chev">' + esc(Store.getName() || "जोड़ें") + ' ›</span></button>' +
+      '<button class="set-row link-row" data-act="open-blessing"><span>🌅 आज का आशीर्वाद भेजें</span><span class="chev">›</span></button></div>' +
+      '<div class="sec-label">दिखावट</div><div class="card-group">' +
       rowChips("थीम", [["system", "फोन जैसा"], ["light", "उजाला"], ["dark", "अँधेरा"]], s.theme, "theme") +
       '<div class="set-row"><span>अक्षर आकार</span><div class="fontctl"><button class="icon-btn" data-act="fontdec">A−</button><b>' + Math.round(s.fontScale * 100) + '%</b><button class="icon-btn" data-act="fontinc">A+</button></div></div>' +
       '<button class="set-row link-row" data-act="city"><span>पंचांग शहर</span><span class="chev">' + esc(cityName) + ' ›</span></button></div>';
@@ -585,6 +621,13 @@
     if (act === "share-fest") { var f = DATA.festivals[parseInt(el.getAttribute("data-i"), 10)]; try { ShareCard.shareFestival(f); Analytics.track("share_clicked", { kind: "festival" }); } catch (e) {} return; }
     if (act === "share-jaap") { var w = DATA.weekday[String(new Date().getDay())] || {}; try { ShareCard.shareJaap(el.getAttribute("data-t"), (DATA.deities[w.deity] || {}).name, w ? (DATA.deities[w.deity] || {}).accent : null); Analytics.track("share_clicked", { kind: "jaap" }); } catch (e) {} return; }
     if (act === "share-app") { Bridge.shareText("🚩 Bhakti Daily — रोज़ की भक्ति: Chalisa, Aarti, Mantra, जाप काउंटर, त्योहार, रिमाइंडर व स्ट्रीक। ज़रूर आज़माएँ 🙏"); Analytics.track("share_clicked", { kind: "app" }); return; }
+    if (act === "open-blessing") { go("blessing"); return; }
+    if (act === "bless-wa") { try { Bridge.shareWhatsApp(Blessing.build({ name: Store.getName() }), Blessing.caption(Store.getName())); Analytics.track("blessing_shared", { via: "whatsapp" }); Analytics.track("share_clicked", { kind: "blessing" }); } catch (e) { toast("नहीं भेज पाया"); } return; }
+    if (act === "bless-share") { try { Bridge.shareImage(Blessing.build({ name: Store.getName() }), Blessing.caption(Store.getName())); Analytics.track("blessing_shared", { via: "other" }); } catch (e) {} return; }
+    if (act === "bless-save") { try { var okb = Bridge.saveImage(Blessing.build({ name: Store.getName() }), "bhakti-blessing"); toast(okb ? "गैलरी में सेव ⬇" : "सेव नहीं हुआ"); } catch (e) {} return; }
+    if (act === "edit-name") { showNameModal(); return; }
+    if (act === "save-name") { var nv = $("#nameInput"); Store.setName(nv ? nv.value : ""); closeModal(); toast(Store.getName() ? ("🙏 नमस्ते " + Store.getName() + " जी") : "नाम हटाया"); render(); return; }
+    if (act === "skip-name") { closeModal(); return; }
     if (act === "markdone") { doMarkDone(_curItem, false); return; }
     if (act === "theme") { Store.setSettings({ theme: el.getAttribute("data-val") }); applyAppearance(); viewSettings(); return; }
     if (act === "analytics") { Store.setSettings({ analytics: el.checked }); return; }

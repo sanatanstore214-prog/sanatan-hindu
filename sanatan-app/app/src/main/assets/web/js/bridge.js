@@ -30,6 +30,13 @@
       var b64 = String(dataUrl).replace(/^data:image\/\w+;base64,/, "");
       call("shareImage", [b64, String(caption || "")]);
     },
+    shareWhatsApp: function (dataUrl, caption) {
+      var b64 = String(dataUrl).replace(/^data:image\/\w+;base64,/, "");
+      // native tries WhatsApp first, falls back to chooser; "__none__" = no native
+      if (call("shareWhatsApp", [b64, String(caption || "")], "__none__") === "__none__") {
+        this.shareImage(dataUrl, caption);
+      }
+    },
 
     // Reminders
     setReminders: function (arr) { call("setReminders", [JSON.stringify(arr)]); },

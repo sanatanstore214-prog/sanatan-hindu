@@ -331,3 +331,18 @@ body.reading #bottomNav, body.focus-mode #bottomNav { display: none; }
 .modal-btns { display: flex; gap: 8px; margin-top: 16px; align-items: center; justify-content: center; flex-wrap: wrap; }
 .modal-btns .pill { flex: 1; min-width: 90px; }
 .chips.wrap { flex-wrap: wrap; margin-bottom: 8px; }
+
+/* ===================== blessing (WhatsApp loop) ===================== */
+.bless-cta { width: 100%; display: flex; align-items: center; gap: 13px; margin-top: 12px;
+  background: linear-gradient(120deg, #1faa53, #0e8a3e); color: #fff; border-radius: var(--radius);
+  padding: 15px 16px; box-shadow: var(--shadow); text-align: left; }
+.bless-cta:active { transform: scale(.99); }
+.bless-ico { font-size: 30px; }
+.bless-body { flex: 1; } .bless-body b { font-size: 16px; display: block; } .bless-body small { opacity: .9; font-size: 12.5px; }
+.bless-wa { font-size: 18px; font-weight: 800; }
+.bless-screen { text-align: center; }
+.bless-img { width: 100%; max-width: 420px; border-radius: 16px; box-shadow: var(--shadow); margin: 4px auto 16px; display: block; }
+.cta-btn.wa { background: linear-gradient(120deg, #1faa53, #0e8a3e); }
+.name-input { width: 100%; margin: 14px 0 4px; background: var(--surface-2); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 13px 16px; font-size: 17px; color: var(--text); outline: none; text-align: center; }
+.name-input:focus { border-color: var(--saffron); }

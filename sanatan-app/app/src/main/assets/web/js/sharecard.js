@@ -71,6 +71,12 @@
     lines.forEach(function (l, i) { ctx.fillText(l, S / 2, startY + i * lh); });
     ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
+    // personalized name (drives sharing)
+    try {
+      var _nm = (window.Store && window.Store.getName) ? window.Store.getName() : "";
+      if (_nm) { ctx.fillStyle = "rgba(255,255,255,0.92)"; ctx.font = "700 38px 'Noto Sans Devanagari', sans-serif"; ctx.fillText("— " + _nm + " जी", S / 2, S - 168); }
+    } catch (e) {}
+
     // branding footer
     ctx.fillStyle = "rgba(255,255,255,0.95)";
     ctx.font = "700 44px 'Noto Sans Devanagari', sans-serif";

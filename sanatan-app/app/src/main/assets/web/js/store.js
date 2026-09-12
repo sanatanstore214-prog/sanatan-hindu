@@ -100,6 +100,10 @@
       return null;
     },
 
+    // ---- user name (personalized share cards) ----
+    getName: function () { return read("name", ""); },
+    setName: function (n) { write("name", (n || "").toString().slice(0, 24).trim()); },
+
     // ---- city (for panchang sun times) ----
     getCity: function () { return read("city", "delhi"); },
     setCity: function (k) { write("city", k); },

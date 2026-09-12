@@ -226,6 +226,29 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Throwable t) { Log.w(TAG, "shareImage: " + t.getMessage()); }
             });
         }
+        @JavascriptInterface public void shareWhatsApp(final String b64, final String caption) {
+            runOnUiThread(() -> {
+                try {
+                    byte[] bytes = Base64.decode(b64, Base64.DEFAULT);
+                    File dir = new File(getCacheDir(), "shared_images");
+                    if (!dir.exists()) dir.mkdirs();
+                    File f = new File(dir, "bhakti_blessing.png");
+                    FileOutputStream fos = new FileOutputStream(f); fos.write(bytes); fos.close();
+                    Uri uri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fileprovider", f);
+                    Intent i = new Intent(Intent.ACTION_SEND);
+                    i.setType("image/png");
+                    i.putExtra(Intent.EXTRA_STREAM, uri);
+                    if (caption != null) i.putExtra(Intent.EXTRA_TEXT, caption);
+                    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    String[] pkgs = { "com.whatsapp", "com.whatsapp.w4b" };
+                    for (String p : pkgs) {
+                        Intent w = new Intent(i); w.setPackage(p);
+                        if (w.resolveActivity(getPackageManager()) != null) { startActivity(w); return; }
+                    }
+                    startActivity(Intent.createChooser(i, "शेयर करें"));
+                } catch (Throwable t) { Log.w(TAG, "shareWhatsApp: " + t.getMessage()); }
+            });
+        }
         @JavascriptInterface public void setReminders(String json) { ReminderScheduler.saveAndSchedule(MainActivity.this, json); }
         @JavascriptInterface public String getReminders() { return ReminderScheduler.getJson(MainActivity.this); }
         @JavascriptInterface public void requestNotificationPermission() {
