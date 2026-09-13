@@ -80,7 +80,13 @@
       if (call("stopSpeak", [], "__none__") === "__none__") {
         try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
       }
-    }
+    },
+    // Background audio (native MediaService)
+    audioPlay: function (src, title) { call("audioPlay", [String(src || ""), String(title || "")]); },
+    audioPause: function () { call("audioPause"); },
+    audioResume: function () { call("audioResume"); },
+    audioSeek: function (ms) { call("audioSeek", [ms | 0]); },
+    audioStop: function () { call("audioStop"); }
   };
 
   window.Bridge = Bridge;

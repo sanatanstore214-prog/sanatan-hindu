@@ -1,5 +1,4 @@
-/* Bhakti Daily 3.0 — content catalog (verified text only; coming_soon me baad me).
- * items[] me entry jodo; festivals enriched with deity/info/greeting/related. */
+/* Bhakti Daily 3.x — content catalog. */
 window.BHAKTI_DATA = {
   "version": 3,
   "thoughts": [
@@ -317,7 +316,7 @@ window.BHAKTI_DATA = {
         "शिव",
         "mantra"
       ],
-      "audio": ""
+      "audio": "sample-om.wav"
     },
     {
       "id": "hare-krishna",

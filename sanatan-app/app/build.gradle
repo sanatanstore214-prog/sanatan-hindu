@@ -10,8 +10,8 @@ android {
         applicationId "com.sanatanhindu.app"
         minSdk 23
         targetSdk 34
-        versionCode 5
-        versionName "3.2"
+        versionCode 6
+        versionName "3.3"
 
         // ============================================================
         // AdMob App ID — abhi GOOGLE TEST ID laga hai (safe).
@@ -38,11 +38,18 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    // Audio assets must stay uncompressed so native MediaPlayer can openFd() them
+    androidResources {
+        noCompress += ['wav', 'mp3', 'm4a', 'ogg']
+    }
 }
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.webkit:webkit:1.11.0'
+    // Background audio (MediaSession + MediaStyle notification)
+    implementation 'androidx.media:media:1.7.0'
     // Google AdMob (kamai ke liye)
     implementation 'com.google.android.gms:play-services-ads:23.2.0'
 }

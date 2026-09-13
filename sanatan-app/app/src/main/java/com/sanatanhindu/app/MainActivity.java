@@ -38,6 +38,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.webkit.WebViewAssetLoader;
 
@@ -49,6 +50,8 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -92,6 +95,27 @@ public class MainActivity extends AppCompatActivity {
 
         initAdsSafely();
         initTts();
+        setupAudioListener();
+    }
+
+    private void setupAudioListener() {
+        AudioService.listener = new AudioService.Listener() {
+            @Override public void onState(String state, int pos, int dur, String title) {
+                if (webView == null) return;
+                final String js = "window.__audio&&window.__audio('" + state + "'," + pos + "," + dur + "," + JSONObject.quote(title) + ")";
+                runOnUiThread(() -> { try { webView.evaluateJavascript(js, null); } catch (Throwable ignored) {} });
+            }
+        };
+    }
+    private void sendAudio(String action, String src, String title, int pos) {
+        try {
+            Intent i = new Intent(this, AudioService.class).setAction(action);
+            if (src != null) i.putExtra("src", src);
+            if (title != null) i.putExtra("title", title);
+            i.putExtra("pos", pos);
+            if (AudioService.A_PLAY.equals(action)) ContextCompat.startForegroundService(this, i);
+            else startService(i);
+        } catch (Throwable t) { Log.w(TAG, "audio svc: " + t.getMessage()); }
     }
 
     private void initTts() {
@@ -359,6 +383,14 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface public void stopSpeak() {
             try { if (tts != null) tts.stop(); } catch (Throwable ignored) {}
         }
+        @JavascriptInterface public void audioPlay(String src, String title) {
+            String s = (src == null) ? null : (src.startsWith("http") ? src : "web/audio/" + src);
+            sendAudio(AudioService.A_PLAY, s, title, 0);
+        }
+        @JavascriptInterface public void audioPause() { sendAudio(AudioService.A_PAUSE, null, null, 0); }
+        @JavascriptInterface public void audioResume() { sendAudio(AudioService.A_RESUME, null, null, 0); }
+        @JavascriptInterface public void audioSeek(int pos) { sendAudio(AudioService.A_SEEK, null, null, pos); }
+        @JavascriptInterface public void audioStop() { sendAudio(AudioService.A_STOP, null, null, 0); }
     }
 
     @Override
@@ -378,6 +410,7 @@ public class MainActivity extends AppCompatActivity {
     @Override protected void onDestroy() {
         if (bannerAd != null) bannerAd.destroy();
         try { if (tts != null) { tts.stop(); tts.shutdown(); } } catch (Throwable ignored) {}
+        AudioService.listener = null;
         super.onDestroy();
     }
 }

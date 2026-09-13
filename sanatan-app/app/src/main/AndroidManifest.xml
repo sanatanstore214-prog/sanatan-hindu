@@ -13,6 +13,9 @@
     <!-- Save wallpaper to gallery (Android 9 & niche; Q+ me MediaStore, koi permission nahi) -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
+    <!-- Background audio (aarti/bhajan) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <!-- Android 11+ package visibility: WhatsApp direct share + share targets -->
     <queries>
@@ -66,6 +69,12 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <!-- Background audio service -->
+        <service
+            android:name=".AudioService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 
         <!-- Home-screen widget: aaj ki bhakti + tithi -->
         <receiver

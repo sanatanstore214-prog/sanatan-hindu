@@ -397,7 +397,7 @@
       '<button class="icon-btn" data-act="fontdec">A−</button><button class="icon-btn" data-act="fontinc">A+</button><button class="icon-btn" data-act="focus">⤢</button>' });
     document.body.classList.add("reading");
     var audioBlock = it.audio
-      ? '<div class="audio-bar" id="audioBar"><button class="au-btn" data-act="audio-toggle">▶</button><div class="au-track"><i id="auProg"></i></div><span id="auTime">0:00</span></div>'
+      ? '<div class="audio-bar" id="audioBar"><button class="au-btn" data-act="au-toggle">▶</button><div class="au-track" id="auTrack"><i id="auProg"></i></div><span id="auTime">0:00</span></div>'
       : '<div class="audio-bar" id="ttsBar"><button class="au-btn" data-act="tts-toggle" id="ttsBtn">🔊</button><div class="tts-info"><b>सुनें</b><small>फोन की आवाज़ में पाठ सुनें</small></div></div>';
     var h = '<div class="screen reader"><div class="read-progress"><i id="readBar"></i></div>' +
       '<h1 class="read-title" style="color:' + it.accent + '">' + esc(it.title) + '</h1>' +
@@ -414,7 +414,16 @@
       '</div><div class="read-done" id="readDone"></div></div>';
     content.innerHTML = h; content.scrollTop = 0;
     updateDoneBtn();
-    if (it.audio) setupAudio(it.audio);
+    if (it.audio) {
+      updateAudioUI();
+      var tr = $("#auTrack");
+      if (tr) tr.addEventListener("click", function (ev) {
+        if (!_aud.dur) return;
+        var r = tr.getBoundingClientRect();
+        var frac = Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width));
+        Bridge.audioSeek(Math.round(frac * _aud.dur));
+      });
+    }
     var bar = $("#readBar");
     content.onscroll = function () {
       var max = content.scrollHeight - content.clientHeight;
@@ -448,24 +457,44 @@
       '<button class="pill" data-go="lib/' + it.type + '">‹ वापस</button></div></div>';
     content.scrollTop = 0;
   }
-  // audio player
-  function setupAudio(url) {
-    try {
-      _audio = new Audio(url);
-      _audio.addEventListener("timeupdate", function () {
-        var p = $("#auProg"), tm = $("#auTime");
-        if (_audio.duration) { if (p) p.style.width = (_audio.currentTime / _audio.duration * 100) + "%"; }
-        if (tm) tm.textContent = fmtTime(_audio.currentTime);
-      });
-    } catch (e) { _audio = null; }
-  }
+  // ---- native background audio ----
+  var _aud = { state: "", pos: 0, dur: 0, id: null, title: "" };
   function fmtTime(s) { s = Math.floor(s || 0); return Math.floor(s / 60) + ":" + pad(s % 60); }
-  function toggleAudio() {
-    if (!_audio) return;
-    var b = $("[data-act=audio-toggle]");
-    if (_audio.paused) { _audio.play(); if (b) b.textContent = "⏸"; } else { _audio.pause(); if (b) b.textContent = "▶"; }
+  function stopAudio() {} // native audio persists across screens by design
+  window.__audio = function (state, pos, dur, title) {
+    _aud.state = state; _aud.pos = pos || 0; _aud.dur = dur || 0; if (title) _aud.title = title;
+    updateAudioUI();
+  };
+  function audioToggle(it) {
+    if (!it) return;
+    if (_aud.id === it.id && _aud.state === "playing") Bridge.audioPause();
+    else if (_aud.id === it.id && _aud.state === "paused") Bridge.audioResume();
+    else { _aud.id = it.id; _aud.title = it.title; Bridge.audioPlay(it.audio, it.title); Analytics.track("audio_play", { id: it.id, via: "recorded" }); }
   }
-  function stopAudio() { if (_audio) { try { _audio.pause(); } catch (e) {} _audio = null; } }
+  function updateAudioUI() {
+    var playing = _aud.state === "playing";
+    var btn = $("[data-act=au-toggle]"), prog = $("#auProg"), tm = $("#auTime");
+    if (btn) btn.textContent = playing ? "⏸" : (_aud.state === "loading" ? "…" : "▶");
+    if (prog) prog.style.width = (_aud.dur > 0 ? (_aud.pos / _aud.dur * 100) : 0) + "%";
+    if (tm) tm.textContent = fmtTime(_aud.pos / 1000) + " / " + fmtTime(_aud.dur / 1000);
+    renderMini();
+  }
+  function renderMini() {
+    var m = document.getElementById("miniPlayer");
+    var active = _aud.id && (_aud.state === "playing" || _aud.state === "paused" || _aud.state === "loading");
+    if (!active) { if (m) m.hidden = true; return; }
+    if (!m) { m = document.createElement("div"); m.id = "miniPlayer"; document.body.appendChild(m); m.addEventListener("click", onMini); }
+    m.hidden = false;
+    m.innerHTML = '<span class="mp-ico">🎧</span><span class="mp-title">' + esc(_aud.title || "भक्ति") + '</span>' +
+      '<button class="mp-btn" data-mp="toggle">' + (_aud.state === "playing" ? "⏸" : "▶") + '</button>' +
+      '<button class="mp-btn" data-mp="stop">✕</button>';
+  }
+  function onMini(e) {
+    var t = e.target, a = t.getAttribute && t.getAttribute("data-mp");
+    if (a === "toggle") { _aud.state === "playing" ? Bridge.audioPause() : Bridge.audioResume(); }
+    else if (a === "stop") { Bridge.audioStop(); _aud.id = null; renderMini(); }
+    else if (_aud.id) go("read/" + _aud.id);
+  }
 
   // auto-scroll
   function toggleAutoScroll() {
@@ -647,7 +676,7 @@
     }
     if (act === "focus") { _focus = !_focus; document.body.classList.toggle("focus-mode", _focus); Bridge.setAdsEnabled(!_focus && !Store.isPremium()); return; }
     if (act === "autoscroll") { toggleAutoScroll(); return; }
-    if (act === "audio-toggle") { toggleAudio(); return; }
+    if (act === "au-toggle") { audioToggle(_curItem); return; }
     if (act === "tts-toggle") {
       var tb = $("#ttsBtn");
       if (window._ttsOn) { Bridge.stopSpeak(); window._ttsOn = false; if (tb) tb.textContent = "🔊"; }
