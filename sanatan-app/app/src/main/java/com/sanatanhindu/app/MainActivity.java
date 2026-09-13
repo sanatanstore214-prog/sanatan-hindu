@@ -391,6 +391,9 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface public void audioResume() { sendAudio(AudioService.A_RESUME, null, null, 0); }
         @JavascriptInterface public void audioSeek(int pos) { sendAudio(AudioService.A_SEEK, null, null, pos); }
         @JavascriptInterface public void audioStop() { sendAudio(AudioService.A_STOP, null, null, 0); }
+        @JavascriptInterface public void openUrl(String url) {
+            runOnUiThread(() -> { try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); } catch (Throwable t) { Log.w(TAG, "openUrl: " + t.getMessage()); } });
+        }
     }
 
     @Override

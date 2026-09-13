@@ -86,7 +86,8 @@
     audioPause: function () { call("audioPause"); },
     audioResume: function () { call("audioResume"); },
     audioSeek: function (ms) { call("audioSeek", [ms | 0]); },
-    audioStop: function () { call("audioStop"); }
+    audioStop: function () { call("audioStop"); },
+    openUrl: function (url) { if (this.isNative()) call("openUrl", [String(url)]); else { try { window.open(String(url), "_blank"); } catch (e) {} } }
   };
 
   window.Bridge = Bridge;

@@ -2,6 +2,7 @@
 (function () {
   "use strict";
   var DATA = window.BHAKTI_DATA || { items: [], festivals: [], thoughts: [], weekday: {}, deities: {} };
+  var DARSHAN = window.BHAKTI_DARSHAN || [];
   var Store = window.Store, Analytics = window.Analytics || { track: function () {} },
       Bridge = window.Bridge, ShareCard = window.ShareCard, Panchang = window.Panchang,
       Recommend = window.Recommend, Wallpaper = window.Wallpaper, Blessing = window.Blessing;
@@ -64,6 +65,7 @@
     if (p[0] === "read") return { name: "read", id: p[1] };
     if (p[0] === "lib") return { name: "lib", type: p[1] || "chalisa" };
     if (p[0] === "festd") return { name: "festd", idx: parseInt(p[1], 10) };
+    if (p[0] === "darshand") return { name: "darshand", idx: parseInt(p[1], 10) };
     if (p[0] === "today") { var t = Recommend.today(); return { name: "read", id: t.item.id }; }
     return { name: p[0] };
   }
@@ -89,6 +91,8 @@
     if (r.name === "wall") return viewWallpapers();
     if (r.name === "blessing") return viewBlessing();
     if (r.name === "muhurat") return viewMuhurat();
+    if (r.name === "darshan") return viewDarshan();
+    if (r.name === "darshand") return viewDarshanDetail(r.idx);
     return viewHome();
   }
 
@@ -139,6 +143,8 @@
       '<button class="streak-chip" data-go="streak">🔥 ' + (st.count || 0) + '</button></div></section>';
     h += pan;
     h += muhuratRow;
+    h += '<button class="row-card" data-go="darshan"><span class="row-ico" style="background:#C2185B22;color:#C2185B">📺</span>' +
+      '<span class="row-body"><b>लाइव दर्शन</b><small>काशी · महाकाल · वैष्णो देवी व अन्य</small></span><span class="live-dot"></span><span class="chev">›</span></button>';
 
     h += '<div class="sec-label">आज की भक्ति</div>';
     h += '<button class="today-card" data-open="' + esc(t.id) + '" style="--accent:' + t.accent + '">' +
@@ -178,7 +184,7 @@
     h += '</div>';
     content.innerHTML = h; content.scrollTop = 0;
     Analytics.track("app_open", {});
-    if (!Store.getName() && !Store.get("namePrompted", false)) { Store.set("namePrompted", true); setTimeout(showNameModal, 700); }
+    if (!Store.getName() && !Store.get("namePrompted", false)) { Store.set("namePrompted", true); setTimeout(function () { if (parseRoute().name === "home" && !document.getElementById("modalBg")) showNameModal(); }, 900); }
   }
 
   // ================= DAILY BLESSING (WhatsApp loop) =================
@@ -233,6 +239,28 @@
         (cur ? '<span class="ch-badge">अभी</span>' : '') + '</div>';
     });
     return h + '</div>';
+  }
+
+  // ================= LIVE DARSHAN =================
+  function viewDarshan() {
+    setNav("home"); setHeader({ title: "लाइव दर्शन", back: true });
+    var h = '<div class="screen"><p class="muted">मंदिरों का आधिकारिक लाइव दर्शन। "देखें" पर मंदिर का official स्ट्रीम खुलेगा।</p><div class="list">';
+    each(DARSHAN, function (d, i) {
+      h += '<button class="list-card" data-go="darshand/' + i + '" style="--accent:' + d.accent + '"><span class="lc-ico">' + d.icon + '</span>' +
+        '<span class="lc-body"><b>' + esc(d.name) + '</b><small>' + esc(d.city) + '</small></span><span class="live-dot"></span><span class="chev">›</span></button>';
+    });
+    h += '</div><p class="disclaimer">⚠️ स्ट्रीम मंदिर ट्रस्ट के आधिकारिक चैनल का है; समय/उपलब्धता बदल सकती है।</p></div>';
+    content.innerHTML = h; content.scrollTop = 0;
+  }
+  function viewDarshanDetail(i) {
+    var d = DARSHAN[i]; if (!d) { go("darshan"); return; }
+    setNav("home"); setHeader({ title: d.name, back: true });
+    var h = '<div class="screen"><div class="fest-hero" style="--accent:' + d.accent + '"><div class="fest-hero-cd">📺 लाइव दर्शन</div><h1>' + esc(d.name) + '</h1><div class="fest-hero-date">' + esc(d.city) + '</div></div>';
+    if (d.aarti) h += '<div class="info-card"><b>🕉️ आरती समय:</b> ' + esc(d.aarti) + '</div>';
+    h += '<button class="cta-btn" data-act="open-live" data-i="' + i + '">🔴 लाइव दर्शन देखें</button>';
+    h += '<p class="disclaimer">यह मंदिर का <b>आधिकारिक</b> लाइव स्ट्रीम (YouTube) खोलता है। कृपया केवल official चैनल देखें। समय/उपलब्धता मंदिर ट्रस्ट पर निर्भर।</p></div>';
+    content.innerHTML = h; content.scrollTop = 0;
+    Analytics.track("darshan_opened", { id: d.id });
   }
 
   function tile(ico, label, route, color) { return '<button class="tile" data-go="' + route + '" style="--c:' + color + '"><span class="tile-ico">' + ico + '</span><span>' + esc(label) + '</span></button>'; }
@@ -698,6 +726,11 @@
     if (act === "edit-name") { showNameModal(); return; }
     if (act === "save-name") { var nv = $("#nameInput"); Store.setName(nv ? nv.value : ""); closeModal(); toast(Store.getName() ? ("🙏 नमस्ते " + Store.getName() + " जी") : "नाम हटाया"); render(); return; }
     if (act === "skip-name") { closeModal(); return; }
+    if (act === "open-live") {
+      var dv = DARSHAN[parseInt(el.getAttribute("data-i"), 10)]; if (!dv) return;
+      var url = (dv.channel && dv.channel.length) ? dv.channel : ("https://www.youtube.com/results?search_query=" + encodeURIComponent(dv.name + " " + dv.city + " live darshan official"));
+      Bridge.openUrl(url); Analytics.track("darshan_watch", { id: dv.id, configured: !!dv.channel }); return;
+    }
     if (act === "markdone") { doMarkDone(_curItem, false); return; }
     if (act === "theme") { Store.setSettings({ theme: el.getAttribute("data-val") }); applyAppearance(); viewSettings(); return; }
     if (act === "analytics") { Store.setSettings({ analytics: el.checked }); return; }
