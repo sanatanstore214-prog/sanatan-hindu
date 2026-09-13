@@ -53,9 +53,14 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Locale;
 
 /**
@@ -393,6 +398,52 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface public void audioStop() { sendAudio(AudioService.A_STOP, null, null, 0); }
         @JavascriptInterface public void openUrl(String url) {
             runOnUiThread(() -> { try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); } catch (Throwable t) { Log.w(TAG, "openUrl: " + t.getMessage()); } });
+        }
+
+        // Native HTTP for Group Jaap (Firestore REST) — avoids WebView CORS.
+        // Runs on a background thread, calls back window.__http(reqId, status, responseText).
+        @JavascriptInterface public void httpRequest(final String reqId, final String method,
+                                                     final String url, final String body) {
+            new Thread(new Runnable() { public void run() {
+                int code = 0; String resp = "";
+                HttpURLConnection conn = null;
+                try {
+                    conn = (HttpURLConnection) new URL(url).openConnection();
+                    conn.setConnectTimeout(15000);
+                    conn.setReadTimeout(20000);
+                    conn.setRequestMethod(method == null ? "GET" : method);
+                    conn.setRequestProperty("Accept", "application/json");
+                    if (body != null && body.length() > 0) {
+                        conn.setDoOutput(true);
+                        conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+                        byte[] out = body.getBytes("UTF-8");
+                        OutputStream os = conn.getOutputStream();
+                        os.write(out); os.flush(); os.close();
+                    }
+                    code = conn.getResponseCode();
+                    InputStream is = (code >= 200 && code < 400) ? conn.getInputStream() : conn.getErrorStream();
+                    if (is != null) {
+                        BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                        StringBuilder sb = new StringBuilder(); String line;
+                        while ((line = br.readLine()) != null) sb.append(line);
+                        br.close();
+                        resp = sb.toString();
+                    }
+                } catch (Throwable t) {
+                    Log.w(TAG, "httpRequest: " + t.getMessage());
+                    if (code == 0) code = -1;
+                    if (resp == null || resp.length() == 0) resp = "{\"__err\":" + JSONObject.quote(String.valueOf(t.getMessage())) + "}";
+                } finally {
+                    if (conn != null) try { conn.disconnect(); } catch (Throwable ignore) {}
+                }
+                final int fCode = code; final String fResp = resp;
+                runOnUiThread(new Runnable() { public void run() {
+                    if (webView == null) return;
+                    String js = "if(window.__http)window.__http(" + JSONObject.quote(reqId) + ","
+                        + fCode + "," + JSONObject.quote(fResp) + ");";
+                    webView.evaluateJavascript(js, null);
+                }});
+            }}).start();
         }
     }
 

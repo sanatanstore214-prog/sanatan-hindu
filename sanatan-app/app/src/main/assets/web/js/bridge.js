@@ -87,7 +87,36 @@
     audioResume: function () { call("audioResume"); },
     audioSeek: function (ms) { call("audioSeek", [ms | 0]); },
     audioStop: function () { call("audioStop"); },
-    openUrl: function (url) { if (this.isNative()) call("openUrl", [String(url)]); else { try { window.open(String(url), "_blank"); } catch (e) {} } }
+    openUrl: function (url) { if (this.isNative()) call("openUrl", [String(url)]); else { try { window.open(String(url), "_blank"); } catch (e) {} } },
+
+    // HTTP (for Group Jaap / Firestore REST). Native path avoids WebView CORS.
+    // Returns a Promise resolving to { status, text }. Falls back to fetch in browser.
+    http: function (method, url, body) {
+      var a = A();
+      if (a && typeof a.httpRequest === "function") {
+        return new Promise(function (resolve) {
+          var id = "h" + (Bridge._hid = (Bridge._hid || 0) + 1) + "_" + Date.now();
+          Bridge._http[id] = resolve;
+          try { a.httpRequest(id, String(method || "GET"), String(url), body == null ? "" : String(body)); }
+          catch (e) { delete Bridge._http[id]; resolve({ status: -1, text: "" }); }
+        });
+      }
+      // Browser fallback (works when CORS allows, e.g. local testing)
+      return fetch(String(url), {
+        method: String(method || "GET"),
+        headers: body ? { "Content-Type": "application/json" } : {},
+        body: body || undefined
+      }).then(function (r) {
+        return r.text().then(function (t) { return { status: r.status, text: t }; });
+      }).catch(function () { return { status: -1, text: "" }; });
+    },
+    _http: {}
+  };
+
+  // Native callback target for Bridge.http
+  window.__http = function (reqId, status, text) {
+    var cb = Bridge._http[reqId];
+    if (cb) { delete Bridge._http[reqId]; try { cb({ status: status, text: text }); } catch (e) {} }
   };
 
   window.Bridge = Bridge;

@@ -155,6 +155,29 @@
     // ---- reminders (cache; native is source of truth on device) ----
     getReminders: function () { return read("reminders", null); },
     setReminders: function (arr) { write("reminders", arr); },
+
+    // ---- device uid (for Group Jaap membership; anonymous, local) ----
+    getUid: function () {
+      var u = read("uid", "");
+      if (!u) {
+        u = "u" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        write("uid", u);
+      }
+      return u;
+    },
+
+    // ---- Group Jaap membership (which group this device joined) ----
+    // { code, name, myName } — null if not in a group.
+    getGroup: function () { return read("group", null); },
+    setGroup: function (g) { write("group", g || null); },
+    clearGroup: function () { write("group", null); },
+    // per-day count already contributed to the group (avoid double-counting)
+    getGroupSynced: function () {
+      var g = read("group_synced", { date: todayStr(), sent: 0 });
+      if (g.date !== todayStr()) { g = { date: todayStr(), sent: 0 }; write("group_synced", g); }
+      return g;
+    },
+    setGroupSynced: function (sent) { write("group_synced", { date: todayStr(), sent: sent }); },
   };
 
   window.Store = Store;

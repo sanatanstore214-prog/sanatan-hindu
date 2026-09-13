@@ -85,6 +85,7 @@
     if (r.name === "search") return viewSearch();
     if (r.name === "favs") return viewFavorites();
     if (r.name === "meri") return viewMeri();
+    if (r.name === "group") return viewGroup();
     if (r.name === "streak") return viewStreak();
     if (r.name === "reminders") return viewReminders();
     if (r.name === "settings") return viewSettings();
@@ -305,9 +306,15 @@
       Store.jaapCompleteRound(target);
       var res = Store.markToday();
       Analytics.track("jaap_completed", { target: target, rounds: j.rounds });
-      var w = DATA.weekday[String(new Date().getDay())] || {};
+      // Family/Group Jaap: add this completed mala to the shared total.
+      var grp = Store.getGroup();
+      var grpLine = "";
+      if (grp) {
+        grpLine = '<p class="grp-added">👨‍👩‍👧 <b>' + esc(grp.name) + '</b> के सामूहिक जाप में जुड़ गया ✓</p>';
+        if (Group.isConfigured()) { try { Group.contribute(target); } catch (e) {} }
+      }
       modal('<div class="modal-card celebrate"><div class="m-ico">🙏</div><h2>' + target + ' जाप पूर्ण!</h2>' +
-        '<p>आपने आज ' + target + ' बार जाप किया।<br>🔥 ' + res.count + ' दिन की भक्ति।</p>' +
+        '<p>आपने आज ' + target + ' बार जाप किया।<br>🔥 ' + res.count + ' दिन की भक्ति।</p>' + grpLine +
         '<div class="modal-btns"><button class="pill" data-act="share-jaap" data-t="' + target + '">↗ शेयर</button>' +
         '<button class="cta-btn" data-act="close-modal">जय हो 🚩</button></div></div>');
       if (res.milestone) { /* streak milestone bhi */ }
@@ -604,7 +611,11 @@
     h += '<div class="stat-row"><button class="stat" data-go="streak"><b>🔥 ' + (st.count || 0) + '</b><small>स्ट्रीक</small></button>' +
       '<button class="stat" data-go="jaap"><b>📿 ' + (j.total || 0) + '</b><small>कुल जाप</small></button>' +
       '<button class="stat" data-go="favs"><b>★ ' + favs.length + '</b><small>पसंदीदा</small></button></div>';
+    var grp = Store.getGroup();
+    var grpLabel = grp ? ("👨‍👩‍👧 समूह जाप · " + esc(grp.name)) : "👨‍👩‍👧 परिवार / समूह जाप";
     h += '<div class="card-group">' +
+      '<button class="set-row link-row" data-go="group"><span>' + grpLabel + '</span>' +
+      (grp ? '<span class="chev"><span class="live-dot"></span> ' + esc(grp.code) + ' ›</span>' : '<span class="chev">जुड़ें ›</span>') + '</button>' +
       linkRow("★ पसंदीदा", "favs") + linkRow("🔥 भक्ति स्ट्रीक", "streak") +
       linkRow("📿 जाप काउंटर", "jaap") + linkRow("🖼️ वॉलपेपर", "wall") +
       linkRow("🔔 रिमाइंडर (" + remOn + " चालू)", "reminders") + linkRow("⚙ सेटिंग", "settings") + '</div>';
@@ -613,6 +624,90 @@
     content.innerHTML = h; content.scrollTop = 0;
   }
   function linkRow(label, route) { return '<button class="set-row link-row" data-go="' + route + '"><span>' + esc(label) + '</span><span class="chev">›</span></button>'; }
+
+  // ================= FAMILY / GROUP JAAP =================
+  function fmtNum(n) { n = Math.round(+n || 0); return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
+  function viewGroup() {
+    setNav("meri"); setHeader({ title: "समूह जाप", back: true });
+    if (!Group.isConfigured()) return groupSetupPending();
+    var grp = Store.getGroup();
+    if (!grp) return groupJoinCreate();
+    return groupDashboard(grp);
+  }
+
+  function groupHero(sub) {
+    return '<div class="grp-hero"><div class="grp-hero-ico">👨‍👩‍👧</div>' +
+      '<h1>परिवार / समूह जाप</h1><p>' + esc(sub) + '</p></div>';
+  }
+
+  function groupSetupPending() {
+    var h = '<div class="screen">' + groupHero("पूरे परिवार या भक्त-मंडली का जाप एक साथ जुड़ता है — सामूहिक संकल्प, leaderboard और प्रेरणा।");
+    h += '<div class="info-card"><b>⚙️ एक-बार का सेटअप बाकी है</b>' +
+      '<p class="muted small">यह फ़ीचर चलाने के लिए app owner को एक <b>FREE Firebase</b> project जोड़ना है (लगभग 5 मिनट, कोई खर्च नहीं)। पूरी विधि: फ़ाइल <b>GROUP_SETUP.md</b> में।</p></div>';
+    h += '<div class="sec-label">तैयार होने पर ऐसा दिखेगा</div>';
+    h += '<div class="grp-total demo"><div class="grp-total-num">10,80,000</div><div class="grp-total-lbl">सामूहिक जाप 🙏</div></div>';
+    h += '<div class="list">' +
+      '<div class="lb-row"><span class="lb-rank">🥇</span><span class="lb-name">माता जी</span><span class="lb-count">2,160</span></div>' +
+      '<div class="lb-row me"><span class="lb-rank">🥈</span><span class="lb-name">आप</span><span class="lb-count">1,512</span></div>' +
+      '<div class="lb-row"><span class="lb-rank">🥉</span><span class="lb-name">भैया</span><span class="lb-count">1,080</span></div></div>';
+    h += '</div>';
+    content.innerHTML = h; content.scrollTop = 0;
+    Analytics.track("group_setup_pending", {});
+  }
+
+  function groupJoinCreate() {
+    var nm = Store.getName() || "";
+    var h = '<div class="screen">' + groupHero("सबका जाप एक साथ जोड़ें — सामूहिक जाप गिनती और leaderboard।");
+    h += '<div class="card-group grp-form"><label class="grp-lbl">आपका नाम</label>' +
+      '<input class="grp-inp" id="grpName" maxlength="24" placeholder="जैसे: रवि" value="' + esc(nm) + '"></div>';
+    h += '<div class="sec-label">नया समूह बनाएँ</div><div class="card-group grp-form">' +
+      '<input class="grp-inp" id="grpTitle" maxlength="40" placeholder="समूह का नाम (जैसे: शर्मा परिवार)">' +
+      '<button class="cta-btn" data-act="grp-create">➕ समूह बनाएँ</button></div>';
+    h += '<div class="sec-label">या कोड से जुड़ें</div><div class="card-group grp-form">' +
+      '<input class="grp-inp code-inp" id="grpCode" maxlength="8" placeholder="कोड (जैसे: K7Q2MX)" autocapitalize="characters">' +
+      '<button class="cta-btn ghost" data-act="grp-join">🔗 जुड़ें</button></div>';
+    h += '<p class="muted small">कोड परिवार/दोस्तों को भेजें — वे उसी कोड से जुड़ेंगे। साझा डेटा: सिर्फ़ नाम और जाप गिनती।</p>';
+    h += '</div>';
+    content.innerHTML = h; content.scrollTop = 0;
+    Analytics.track("group_open", { state: "join_create" });
+  }
+
+  function groupDashboard(grp) {
+    var h = '<div class="screen"><div class="grp-hero"><div class="grp-hero-ico">👨‍👩‍👧</div>' +
+      '<h1>' + esc(grp.name) + '</h1>' +
+      '<button class="grp-code-chip" data-act="grp-copy" data-code="' + esc(grp.code) + '">कोड: <b>' + esc(grp.code) + '</b> 📋</button></div>';
+    h += '<div class="grp-total" id="grpTotal"><div class="grp-total-num">…</div><div class="grp-total-lbl">सामूहिक जाप</div></div>';
+    h += '<button class="cta-btn wa" data-act="grp-invite" data-code="' + esc(grp.code) + '">🟢 WhatsApp पर आमंत्रित करें</button>';
+    h += '<div class="sec-label">लीडरबोर्ड <button class="pill sm" data-act="grp-refresh">↻</button></div>';
+    h += '<div class="list" id="grpBoard"><div class="grp-loading">लोड हो रहा है… 🙏</div></div>';
+    h += '<button class="nudge danger" data-act="grp-leave">समूह छोड़ें</button>';
+    h += '</div>';
+    content.innerHTML = h; content.scrollTop = 0;
+    Analytics.track("group_open", { state: "dashboard" });
+    groupRefresh(grp);
+  }
+
+  function groupRefresh(grp) {
+    grp = grp || Store.getGroup(); if (!grp) return;
+    Group.fetchGroup(grp.code).then(function (g) {
+      var el = $("#grpTotal"); if (!el) return;
+      if (g) el.innerHTML = '<div class="grp-total-num">' + fmtNum(g.total) + '</div><div class="grp-total-lbl">सामूहिक जाप 🙏</div>';
+      else el.innerHTML = '<div class="grp-total-num">—</div><div class="grp-total-lbl">कनेक्ट नहीं हो पाया</div>';
+    });
+    Group.leaderboard(grp.code).then(function (list) {
+      var el = $("#grpBoard"); if (!el) return;
+      if (!list || !list.length) { el.innerHTML = '<div class="grp-loading">अभी कोई जाप नहीं — पहला आप करें! 📿</div>'; return; }
+      var medals = ["🥇", "🥈", "🥉"], out = "";
+      for (var i = 0; i < list.length; i++) {
+        var m = list[i];
+        out += '<div class="lb-row' + (m.me ? " me" : "") + '"><span class="lb-rank">' + (medals[i] || (i + 1)) + '</span>' +
+          '<span class="lb-name">' + esc(m.name) + (m.me ? ' <small>(आप)</small>' : '') + '</span>' +
+          '<span class="lb-count">' + fmtNum(m.count) + '</span></div>';
+      }
+      el.innerHTML = out;
+    });
+  }
 
   // ================= REMINDERS =================
   var DEFAULT_REMINDERS = [
@@ -655,7 +750,7 @@
     h += '<div class="sec-label">भक्ति</div><div class="card-group">' + linkRow("🔔 रिमाइंडर", "reminders") + linkRow("🔥 स्ट्रीक", "streak") + linkRow("📿 जाप", "jaap") + '</div>';
     h += '<div class="sec-label">मोनेटाइज़ेशन</div><div class="card-group"><div class="set-row"><span>विज्ञापन हटाएँ (Premium)</span>' + (prem ? '<span class="badge on">सक्रिय</span>' : '<button class="pill sm" data-act="premium">देखें</button>') + '</div></div>';
     h += '<div class="sec-label">प्राइवेसी</div><div class="card-group"><div class="set-row"><span>गुमनाम एनालिटिक्स</span><label class="switch"><input type="checkbox" data-act="analytics"' + (s.analytics !== false ? " checked" : "") + '><span></span></label></div></div>';
-    h += '<div class="sec-label">ऐप</div><div class="card-group"><button class="set-row link-row" data-act="share-app"><span>↗ ऐप शेयर करें</span><span class="chev">›</span></button><div class="set-row muted"><span>Bhakti Daily</span><span>v3.0</span></div></div>';
+    h += '<div class="sec-label">ऐप</div><div class="card-group"><button class="set-row link-row" data-act="share-app"><span>↗ ऐप शेयर करें</span><span class="chev">›</span></button><div class="set-row muted"><span>Bhakti Daily</span><span>v3.5</span></div></div>';
     h += '</div>';
     content.innerHTML = h; content.scrollTop = 0;
   }
@@ -750,6 +845,56 @@
       saveReminders(r); Analytics.track("reminder_enabled", { id: rid, on: el.checked }); toast(el.checked ? "रिमाइंडर चालू ✓" : "बंद"); return;
     }
     if (act === "rem-time") { var r2 = loadReminders(), rid2 = el.getAttribute("data-rid"), p = el.value.split(":"); each(r2, function (rem) { if (rem.id === rid2) { rem.hour = +p[0]; rem.minute = +p[1]; } }); saveReminders(r2); toast("समय सेट ✓"); return; }
+    // ---- Group Jaap ----
+    if (act === "grp-create") {
+      var gn = ($("#grpName") ? $("#grpName").value : "").trim();
+      var gt = ($("#grpTitle") ? $("#grpTitle").value : "").trim();
+      if (gn) Store.setName(gn);
+      if (!gt) { toast("समूह का नाम डालें"); return; }
+      toast("समूह बन रहा है… 🙏");
+      Group.createGroup(gt, gn || Store.getName() || "भक्त").then(function (r) {
+        if (r && r.ok) { Analytics.track("group_created", {}); go("group"); toast("✓ समूह बना — कोड: " + r.code); }
+        else { toast(groupErr(r)); }
+      });
+      return;
+    }
+    if (act === "grp-join") {
+      var jn = ($("#grpName") ? $("#grpName").value : "").trim();
+      var jc = ($("#grpCode") ? $("#grpCode").value : "").trim();
+      if (jn) Store.setName(jn);
+      if (!jc) { toast("कोड डालें"); return; }
+      toast("जुड़ रहे हैं… 🙏");
+      Group.joinGroup(jc, jn || Store.getName() || "भक्त").then(function (r) {
+        if (r && r.ok) { Analytics.track("group_joined", {}); go("group"); toast("✓ " + r.name + " में जुड़ गए"); }
+        else { toast(groupErr(r)); }
+      });
+      return;
+    }
+    if (act === "grp-copy") { Bridge.copyText(el.getAttribute("data-code")); toast("कोड कॉपी हो गया ⧉"); return; }
+    if (act === "grp-invite") {
+      var gcode = el.getAttribute("data-code"), gg = Store.getGroup();
+      var msg = "🙏 " + (Store.getName() ? (Store.getName() + " ") : "") + "आपको \"" + (gg ? gg.name : "Bhakti") +
+        "\" सामूहिक जाप में जोड़ रहे हैं!\n\n📿 Bhakti Daily app: मेरी → समूह जाप → कोड डालें: *" + gcode +
+        "*\n\nApp: https://play.google.com/store/apps/details?id=com.sanatanhindu.app";
+      Bridge.openUrl("https://wa.me/?text=" + encodeURIComponent(msg));
+      Analytics.track("group_invite", {}); return;
+    }
+    if (act === "grp-refresh") { groupRefresh(); toast("रिफ्रेश…"); return; }
+    if (act === "grp-leave") {
+      modal('<div class="modal-card"><div class="m-ico">👋</div><h2>समूह छोड़ें?</h2>' +
+        '<p>आपकी अब तक की गिनती समूह में रहेगी, पर आप आगे स्वतः नहीं जुड़ेंगे।</p>' +
+        '<div class="modal-btns"><button class="pill" data-act="close-modal">रहने दें</button>' +
+        '<button class="cta-btn danger" data-act="grp-leave-yes">हाँ, छोड़ें</button></div></div>'); return;
+    }
+    if (act === "grp-leave-yes") { Store.clearGroup(); closeModal(); Analytics.track("group_left", {}); go("meri"); toast("समूह छोड़ दिया"); return; }
+  }
+  function groupErr(r) {
+    var e = r && r.error;
+    if (e === "not_found") return "❌ कोड नहीं मिला — दोबारा जाँचें";
+    if (e === "bad_code") return "❌ कोड बहुत छोटा है";
+    if (e === "not_configured") return "सेटअप बाकी है (GROUP_SETUP.md)";
+    if (e === "code_collision") return "फिर कोशिश करें";
+    return "❌ नेटवर्क समस्या — बाद में कोशिश करें";
   }
   function wtheme(k) { var th = null; each(Wallpaper.themes, function (t) { if (t.key === k) th = t; }); return th; }
   function shareItemText(it) { if (!it) return; Bridge.shareText(it.title + "\n\n" + (it.text || "").split("\n").slice(0, 4).join("\n") + "\n\n🚩 Bhakti Daily se"); Analytics.track("share_clicked", { kind: "text" }); }

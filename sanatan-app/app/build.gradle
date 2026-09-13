@@ -2,6 +2,12 @@ plugins {
     id 'com.android.application'
 }
 
+// Release signing — reads key.properties if present (gitignored). Without it,
+// debug still builds and release stays unsigned (so CI/others can build).
+def kpf = rootProject.file("key.properties")
+def keystoreProps = new Properties()
+if (kpf.exists()) { keystoreProps.load(new FileInputStream(kpf)) }
+
 android {
     namespace 'com.sanatanhindu.app'
     compileSdk 34
@@ -10,8 +16,8 @@ android {
         applicationId "com.sanatanhindu.app"
         minSdk 23
         targetSdk 34
-        versionCode 7
-        versionName "3.4"
+        versionCode 8
+        versionName "3.5"
 
         // ============================================================
         // AdMob App ID — abhi GOOGLE TEST ID laga hai (safe).
@@ -27,8 +33,20 @@ android {
         ]
     }
 
+    signingConfigs {
+        release {
+            if (kpf.exists()) {
+                storeFile rootProject.file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (kpf.exists()) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }

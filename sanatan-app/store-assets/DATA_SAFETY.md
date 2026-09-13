@@ -10,16 +10,28 @@ Use these when filling the **Data safety** section in Play Console.
 |-----------|-----------|--------|---------|-----|
 | Device or other IDs (Advertising ID) | Yes | Yes | Advertising / analytics | Google AdMob SDK |
 | App activity (app interactions) | Yes (anonymous) | No | Analytics / app functionality | App (local) + AdMob |
+| Name (display name) | Yes — **only if** user joins/creates a Group Jaap | Yes — visible to that group's members | App functionality (group leaderboard) | App → Firebase Firestore |
+| App activity (jaap count) | Yes — **only if** in a Group Jaap | Yes — group total & leaderboard | App functionality | App → Firebase Firestore |
 
-- The app itself does **not** collect name, email, contacts, location,
-  photos, or files.
-- Favorites / settings / streak / reminders are stored **only on the
-  device** (not "collected" in Play terms — not sent off device).
+- The app itself does **not** collect email, phone number, contacts,
+  location, photos, or files.
+- Favorites / settings / streak / reminders / your saved name are stored
+  **only on the device** (not "collected" in Play terms) **unless** you opt
+  in to **Group Jaap**.
+- **Group Jaap (optional):** if a user creates or joins a group, only their
+  **chosen display name** and **jaap count** are sent to the developer's
+  Firebase (Firestore) so the group can show a shared total and leaderboard.
+  No advertising ID, contacts, phone number or location is sent. If the
+  Group feature is not configured by the developer, **no data leaves the
+  device at all** (feature stays inactive).
 
 ## Security practices
-- **Data encrypted in transit:** Yes (ad requests use HTTPS).
-- **Users can request data deletion:** Uninstalling removes all local data;
-  no server data is held by the developer.
+- **Data encrypted in transit:** Yes (ad + Firestore requests use HTTPS).
+- **Users can request data deletion:** Uninstalling removes all local data.
+  For Group Jaap, "समूह छोड़ें" (Leave group) stops further contribution; to
+  erase a member's name/count from the cloud, the developer can delete that
+  member doc in the Firebase console (document a support email in the Play
+  listing for deletion requests).
 
 ## Advertising ID declaration
 - App uses Advertising ID: **Yes** (via Google AdMob). Declare the
