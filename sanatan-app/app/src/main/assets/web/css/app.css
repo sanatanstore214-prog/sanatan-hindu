@@ -2,37 +2,56 @@
    Bhakti Daily — premium devotional design system (light + dark, ES-safe)
    ======================================================================== */
 :root {
-  --bg: #FBF6EE;
-  --surface: #FFFFFF;
-  --surface-2: #FFF3E4;
-  --text: #2A2018;
-  --muted: #8A7A66;
-  --border: #EFE4D2;
+  --bg: #FBF3E4;
+  --surface: #FFFDF8;
+  --surface-2: #FBEFD7;
+  --text: #291B0E;
+  --muted: #8B7758;
+  --border: #ECDFC4;
   --saffron: #E8590C;
-  --saffron-2: #FF7A2E;
-  --gold: #C9A227;
-  --maroon: #8A2B1E;
-  --shadow: 0 4px 18px rgba(120,60,20,.10);
-  --shadow-sm: 0 2px 8px rgba(120,60,20,.08);
-  --radius: 18px;
-  --radius-sm: 12px;
+  --saffron-2: #FF8A34;
+  --gold: #C39A34;
+  --gold-2: #F3D67E;
+  --gold-deep: #A9791C;
+  --maroon: #7A1F14;
+  --maroon-2: #B23A1E;
+  --gold-grad: linear-gradient(135deg, #F6DA86 0%, #D3A73E 46%, #A9791C 100%);
+  --royal-grad: linear-gradient(135deg, #6E1A12 0%, #A5301A 55%, #E8590C 122%);
+  --glass: rgba(255,253,248,.84);
+  --glow-gold: 0 12px 34px rgba(179,58,30,.16), 0 0 0 1px rgba(201,152,46,.22);
+  --card-line: 1px solid rgba(201,152,46,.20);
+  --shadow: 0 8px 26px rgba(120,60,20,.12);
+  --shadow-sm: 0 3px 12px rgba(120,60,20,.09);
+  --radius: 20px;
+  --radius-sm: 14px;
+  --display: "Rozha One", "Noto Serif Devanagari", Georgia, "Times New Roman", serif;
   --font-scale: 1;
-  --nav-h: 62px;
+  --nav-h: 66px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg:#14100C; --surface:#1E1913; --surface-2:#26201A; --text:#F2E9DC;
-    --muted:#A89A88; --border:#322A22; --saffron:#FF8A3D; --saffron-2:#FF9A54;
-    --gold:#D8B84A; --maroon:#E0705E; --shadow:0 6px 22px rgba(0,0,0,.45);
-    --shadow-sm:0 2px 10px rgba(0,0,0,.35); color-scheme: dark;
+    --bg:#120C08; --surface:#1E1711; --surface-2:#2A2016; --text:#F4EAD8;
+    --muted:#B4A084; --border:#3A2C1E; --saffron:#FF8A3D; --saffron-2:#FFA24E;
+    --gold:#E4C25E; --gold-2:#FFE7A0; --gold-deep:#DDBB4E; --maroon:#E0705E; --maroon-2:#C0442A;
+    --gold-grad: linear-gradient(135deg,#FCE39A,#E0BC55 50%,#B78A2C);
+    --royal-grad: linear-gradient(135deg,#3A0F0A,#7A1F14 55%,#C2451E);
+    --glass: rgba(30,23,17,.80);
+    --glow-gold:0 12px 34px rgba(0,0,0,.5), 0 0 0 1px rgba(228,194,94,.24);
+    --card-line: 1px solid rgba(228,194,94,.16);
+    --shadow:0 10px 30px rgba(0,0,0,.5); --shadow-sm:0 3px 14px rgba(0,0,0,.4); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg:#14100C; --surface:#1E1913; --surface-2:#26201A; --text:#F2E9DC;
-  --muted:#A89A88; --border:#322A22; --saffron:#FF8A3D; --saffron-2:#FF9A54;
-  --gold:#D8B84A; --maroon:#E0705E; --shadow:0 6px 22px rgba(0,0,0,.45);
-  --shadow-sm:0 2px 10px rgba(0,0,0,.35); color-scheme: dark;
+  --bg:#120C08; --surface:#1E1711; --surface-2:#2A2016; --text:#F4EAD8;
+  --muted:#B4A084; --border:#3A2C1E; --saffron:#FF8A3D; --saffron-2:#FFA24E;
+  --gold:#E4C25E; --gold-2:#FFE7A0; --gold-deep:#DDBB4E; --maroon:#E0705E; --maroon-2:#C0442A;
+  --gold-grad: linear-gradient(135deg,#FCE39A,#E0BC55 50%,#B78A2C);
+  --royal-grad: linear-gradient(135deg,#3A0F0A,#7A1F14 55%,#C2451E);
+  --glass: rgba(30,23,17,.80);
+  --glow-gold:0 12px 34px rgba(0,0,0,.5), 0 0 0 1px rgba(228,194,94,.24);
+  --card-line: 1px solid rgba(228,194,94,.16);
+  --shadow:0 10px 30px rgba(0,0,0,.5); --shadow-sm:0 3px 14px rgba(0,0,0,.4); color-scheme: dark;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -480,3 +499,105 @@ body.reading #miniPlayer, body.focus-mode #miniPlayer { bottom: 8px; }
 .aura-mini span { width: 42px; height: 42px; border-radius: 50%; background: rgba(0,0,0,.25); display: flex; align-items: center; justify-content: center; font-size: 24px; }
 .aura-bd { flex: 1; text-align: left; } .aura-bd b { font-size: 17px; display: block; } .aura-bd small { opacity: .9; font-size: 12.5px; }
 .aura-banner .chev { color: rgba(255,255,255,.8); }
+
+/* ============================================================
+   ✦ ULTRA DIVINE PREMIUM — royal temple layer (gold · glow · Rozha)
+   ============================================================ */
+@font-face {
+  font-family: "Rozha One";
+  src: url("../fonts/RozhaOne-Regular.ttf") format("truetype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+
+/* divine fixed background glow (gold above, maroon below) */
+body {
+  background:
+    radial-gradient(1100px 480px at 50% -8%, rgba(201,152,46,.18), transparent 62%),
+    radial-gradient(900px 460px at 50% 112%, rgba(122,31,20,.10), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+/* royal display typography for large headings */
+.brand, .hero-greet, .today-title, .fest-hero h1, .grp-hero h1,
+.aura-title, .modal-card h2, .rf-hd b, .fest-hi-body b {
+  font-family: var(--display); font-weight: 400; font-synthesis: none; letter-spacing: .3px;
+}
+.brand { font-size: 22px; }
+.hero-greet { font-size: 26px; }
+.today-title { font-size: 23px; }
+
+/* ---- premium royal header ---- */
+#appHeader {
+  background: var(--royal-grad);
+  box-shadow: 0 6px 22px rgba(90,20,10,.30);
+}
+#appHeader::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2.5px;
+  background: var(--gold-grad); opacity: .95;
+}
+.brand-flag { filter: drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
+.icon-btn { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.16); }
+
+/* ---- hero: royal + gold glow ---- */
+.hero { background: var(--royal-grad); box-shadow: var(--glow-gold); border: 1px solid rgba(243,214,126,.28); }
+.hero:before { opacity: .18; color: var(--gold-2); }
+.streak-chip { background: linear-gradient(135deg, rgba(243,214,126,.32), rgba(201,152,46,.16)); border: 1px solid rgba(243,214,126,.42); }
+
+/* ---- gold section labels ---- */
+.sec-label { color: var(--gold-deep); letter-spacing: 1.4px; }
+
+/* ---- gold hairline on all cards (premium depth) ---- */
+.today-card, .row-card, .list-card, .mini, .tile, .info-card,
+.quote-card, .rf-main, .rf-item, .lb-row, .rem-card, .stat,
+.grp-total, .status-thumb, .ladder-row, .card-group, .rf-luck > div,
+.jaap-stats, .aura-tip, .panchang, .rf-upay, .set-row, .warn {
+  border: var(--card-line);
+}
+.tile-ico, .row-ico { box-shadow: 0 4px 12px rgba(0,0,0,.14), 0 0 0 2px rgba(255,255,255,.35) inset; }
+
+/* ---- primary CTA: gold-glow + shimmer sweep ---- */
+.cta-btn {
+  background: linear-gradient(120deg, var(--saffron), var(--saffron-2) 58%, var(--gold));
+  box-shadow: 0 10px 26px rgba(232,89,12,.34), 0 0 0 1px rgba(243,214,126,.42);
+  position: relative; overflow: hidden; letter-spacing: .3px;
+}
+.cta-btn::after {
+  content: ""; position: absolute; top: 0; left: -60%; width: 38%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent);
+  transform: skewX(-18deg); animation: sheen 3.6s ease-in-out infinite;
+}
+.cta-btn.wa { background: linear-gradient(120deg, #1faa53, #0e8a3e); }
+.cta-btn.ghost { background: var(--surface); }
+.cta-btn.ghost::after { display: none; }
+@keyframes sheen { 0%, 55% { left: -60%; } 100% { left: 130%; } }
+
+/* ---- pills / active states ---- */
+.pill.on { background: linear-gradient(120deg, var(--saffron), var(--saffron-2)); border-color: transparent; box-shadow: 0 4px 14px rgba(232,89,12,.30); }
+.chip.on { background: linear-gradient(120deg, var(--saffron), var(--saffron-2)); }
+
+/* ---- glassy gold bottom nav ---- */
+#bottomNav {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(14px) saturate(1.25); backdrop-filter: blur(14px) saturate(1.25);
+  border-top: 1px solid rgba(201,152,46,.3);
+  box-shadow: 0 -6px 24px rgba(90,50,10,.10);
+}
+.nav-btn { position: relative; }
+.nav-btn.active .nav-ico { filter: drop-shadow(0 3px 8px rgba(232,89,12,.5)); transform: translateY(-1px) scale(1.08); }
+.nav-btn.active::before { content: ""; position: absolute; top: 0; width: 32px; height: 3px; border-radius: 0 0 4px 4px; background: var(--gold-grad); }
+
+/* ---- divine jaap ring ---- */
+.jaap-ring { box-shadow: var(--glow-gold), 0 0 44px rgba(232,89,12,.16); }
+.jaap-ring::before { box-shadow: inset 0 0 0 1px rgba(201,152,46,.3); }
+.jaap-count { text-shadow: 0 3px 14px rgba(232,89,12,.28); }
+
+/* ---- premium modal ---- */
+.modal-card { border: 1px solid rgba(243,214,126,.35); box-shadow: 0 20px 64px rgba(0,0,0,.42), 0 0 0 1px rgba(243,214,126,.14); }
+
+/* ---- aura / level gold ---- */
+.aura-title { color: var(--gold-deep); }
+.aura-ring { box-shadow: 0 0 40px rgba(201,152,46,.28); }
+
+/* respect reduced motion */
+@media (prefers-reduced-motion: reduce) { .cta-btn::after { animation: none; display: none; } }

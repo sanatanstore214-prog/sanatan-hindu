@@ -3,13 +3,13 @@
 Ye **step-by-step** guide hai app ko Google Play par publish karke **kamai
 shuru** karne ke liye. Technical jaankari kam se kam rakhi hai. 🙏
 
-App abhi **ready + signed** hai (v3.7). Neeche jo ⬜ hai wo **aapko** karna hai
+App abhi **ready + signed** hai (v3.8). Neeche jo ⬜ hai wo **aapko** karna hai
 (zyada tar Google account/paisa wali cheezein — sirf aap kar sakte ho).
 
 ---
 
 ## 📦 0) Jo AB TAK ban chuka hai (ready)
-- ✅ **Signed App Bundle** (Play upload ke liye): `app-release.aab` (v3.7, code 10)
+- ✅ **Signed App Bundle** (Play upload ke liye): `app-release.aab` (v3.8, code 11)
 - ✅ **Signed APK** (khud phone me test ke liye): `app-release.apk`
 - ✅ **Upload keystore**: `keystore/bhakti-upload.keystore` — *isko sambhaal kar rakho (neeche step 1)*
 - ✅ **Feature graphic** (1024x500) + **9 framed screenshots** — `store-assets/`
@@ -93,7 +93,7 @@ aur inhe click karna bhi safe hai). Asli kamai ke liye:
 - ⬜ Console → **Production** (pehli baar **Closed testing** recommend hai) → **Create release**.
 - ⬜ **Play App Signing** ko **on** rehne do (default).
 - ⬜ `app-release.aab` upload karo.
-- ⬜ Release notes daalo (`PLAY_LISTING.md` ka "What's new v3.7").
+- ⬜ Release notes daalo (`PLAY_LISTING.md` ka "What's new v3.8").
 - ⬜ **Review** → **Rollout**. Pehli review me **2-7 din** lag sakte hain.
 
 ---
@@ -115,8 +115,8 @@ Output:
 - AAB → `app/build/outputs/bundle/release/app-release.aab`
 - APK → `app/build/outputs/apk/release/app-release.apk`
 
-> Har nayi release me `app/build.gradle` me **versionCode +1** (abhi 10 → 11) aur
-> `versionName` badlo (abhi "3.7").
+> Har nayi release me `app/build.gradle` me **versionCode +1** (abhi 11 → 12) aur
+> `versionName` badlo (abhi "3.8").
 
 ---
 

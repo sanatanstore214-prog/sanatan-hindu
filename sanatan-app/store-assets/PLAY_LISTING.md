@@ -78,10 +78,14 @@ Hi-res icon (512x512): `store-assets/playstore-icon-512.png`
 "रोज़ इसी समय भक्ति का स्मरण भेजने के लिए नोटिफिकेशन की अनुमति दें।
 आप कभी भी बंद कर सकते हैं।"
 
-## What's new (release notes v3.7)
-• 🆕 🎨 भक्ति Status / DP Maker — नाम वाले sundar status + DP, 1-tap WhatsApp/Insta शेयर
-• 🆕 ✨ भक्ति Level — जाप व स्ट्रीक से भक्त → योगी → ऋषि तक level up
+## What's new (release notes v3.8)
+• 🆕 ✨ नया **Ultra-Divine Premium** look — royal gold + शाही रंग, elegant नई typography, divine glow
+• हर स्क्रीन refined — Light व Dark दोनों में और सुंदर
 • छोटे सुधार
+
+### (v3.7)
+• 🎨 भक्ति Status / DP Maker — नाम वाले sundar status + DP, 1-tap WhatsApp/Insta शेयर
+• ✨ भक्ति Level — जाप व स्ट्रीक से भक्त → योगी → ऋषि तक level up
 
 ### (v3.6)
 • 🌅 आज का राशिफल — सभी 12 राशि का रोज़ का फल + राशि-अनुसार उपाय (पाठ से जुड़ा)
