@@ -120,6 +120,14 @@
       if (window.Bridge) window.Bridge.shareImage(url, snip + "\n\n🚩 Bhakti Daily");
       return url;
     },
+    shareLevel: function (lv) {
+      var nm = (window.Store && window.Store.getName) ? window.Store.getName() : "";
+      var snip = lv.emoji + " " + lv.title + "\n\n🔥 भक्ति यात्रा जारी है!" + (lv.next ? "\nअगला स्तर: " + lv.next : "\nसर्वोच्च स्तर 🏆");
+      var url = build({ title: "मेरी भक्ति यात्रा", accent: "#7E57C2", snippet: snip });
+      var cap = (nm ? nm + " " : "") + "अब " + lv.title + " " + lv.emoji + " बन गए! 🔥\nBhakti Daily par apni bhakti yatra shuru karo 🙏\nhttps://play.google.com/store/apps/details?id=com.sanatanhindu.app";
+      if (window.Bridge) window.Bridge.shareImage(url, cap);
+      return url;
+    },
     shareRashifal: function (r) {
       var snip = r.rashi.sym + " " + r.rashi.name + " राशि\n\n" + r.saamanya +
         "\n\nशुभ रंग: " + r.color + " · शुभ अंक: " + r.ank;

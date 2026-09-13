@@ -16,8 +16,8 @@ android {
         applicationId "com.sanatanhindu.app"
         minSdk 23
         targetSdk 34
-        versionCode 9
-        versionName "3.6"
+        versionCode 10
+        versionName "3.7"
 
         // ============================================================
         // AdMob App ID — abhi GOOGLE TEST ID laga hai (safe).

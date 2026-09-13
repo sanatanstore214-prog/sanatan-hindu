@@ -93,6 +93,8 @@
     if (r.name === "blessing") return viewBlessing();
     if (r.name === "muhurat") return viewMuhurat();
     if (r.name === "rashifal") return viewRashifal();
+    if (r.name === "status") return viewStatus();
+    if (r.name === "level") return viewLevel();
     if (r.name === "darshan") return viewDarshan();
     if (r.name === "darshand") return viewDarshanDetail(r.idx);
     return viewHome();
@@ -150,6 +152,8 @@
     var rk0 = Store.getRashi(), rObj = rk0 ? Rashifal.byKey(rk0) : null;
     h += '<button class="row-card" data-go="rashifal"><span class="row-ico" style="background:#7E57C222;color:#7E57C2">🌅</span>' +
       '<span class="row-body"><b>आज का राशिफल</b><small>' + (rObj ? (rObj.sym + ' ' + esc(rObj.name) + ' — आज का फल देखें') : 'अपनी राशि चुनें · सभी 12 राशि') + '</small></span><span class="chev">›</span></button>';
+    h += '<button class="row-card" data-go="status"><span class="row-ico" style="background:#F857A622;color:#E52E71">🎨</span>' +
+      '<span class="row-body"><b>भक्ति Status / DP बनाओ</b><small>नाम वाले sundar status · WhatsApp-Insta 🔥</small></span><span class="chev">›</span></button>';
 
     h += '<div class="sec-label">आज की भक्ति</div>';
     h += '<button class="today-card" data-open="' + esc(t.id) + '" style="--accent:' + t.accent + '">' +
@@ -612,6 +616,10 @@
     var st = Store.getStreak(), j = Store.getJaap(), favs = Store.getFavs(), rec = Store.getRecents();
     var rem = Store.getReminders(); var remOn = rem ? rem.filter(function (r) { return r.enabled; }).length : 0;
     var h = '<div class="screen">';
+    var lv = Level.forUser();
+    h += '<button class="aura-banner" data-go="level"><div class="aura-mini" style="--p:' + lv.progress + '"><span>' + lv.emoji + '</span></div>' +
+      '<div class="aura-bd"><b>' + esc(lv.title) + '</b><small>' + (lv.isMax ? 'सर्वोच्च स्तर 🏆 · ✨ ' + fmtNum(lv.xp) : ('✨ ' + fmtNum(lv.xp) + ' अंक · अगला ' + esc(lv.next) + ' ' + fmtNum(lv.toNext) + ' दूर')) + '</small></div>' +
+      '<span class="chev">›</span></button>';
     h += '<div class="stat-row"><button class="stat" data-go="streak"><b>🔥 ' + (st.count || 0) + '</b><small>स्ट्रीक</small></button>' +
       '<button class="stat" data-go="jaap"><b>📿 ' + (j.total || 0) + '</b><small>कुल जाप</small></button>' +
       '<button class="stat" data-go="favs"><b>★ ' + favs.length + '</b><small>पसंदीदा</small></button></div>';
@@ -621,6 +629,8 @@
       '<button class="set-row link-row" data-go="group"><span>' + grpLabel + '</span>' +
       (grp ? '<span class="chev"><span class="live-dot"></span> ' + esc(grp.code) + ' ›</span>' : '<span class="chev">जुड़ें ›</span>') + '</button>' +
       linkRow("🌅 आज का राशिफल", "rashifal") +
+      linkRow("🎨 भक्ति Status / DP बनाओ", "status") +
+      linkRow("✨ मेरी भक्ति यात्रा (Level)", "level") +
       linkRow("★ पसंदीदा", "favs") + linkRow("🔥 भक्ति स्ट्रीक", "streak") +
       linkRow("📿 जाप काउंटर", "jaap") + linkRow("🖼️ वॉलपेपर", "wall") +
       linkRow("🔔 रिमाइंडर (" + remOn + " चालू)", "reminders") + linkRow("⚙ सेटिंग", "settings") + '</div>';
@@ -755,6 +765,81 @@
     Analytics.track("rashifal_open", { rashi: "picker" });
   }
 
+  // ================= STATUS / DP MAKER (viral) =================
+  var _stCat = "morning", _stSize = "story", _stCur = null;
+  function viewStatus() {
+    setNav("home"); setHeader({ title: "भक्ति Status", back: true });
+    var h = '<div class="screen">';
+    h += '<p class="muted center">नाम वाले सुंदर Status/DP — WhatsApp व Insta पर शेयर करें 🔥</p>';
+    h += '<div class="seg2"><button class="seg' + (_stSize === "story" ? " on" : "") + '" data-act="status-size" data-s="story">📱 Status</button>' +
+      '<button class="seg' + (_stSize === "dp" ? " on" : "") + '" data-act="status-size" data-s="dp">🟣 DP</button></div>';
+    h += '<div class="status-cats">';
+    each(StatusMaker.cats, function (c) { h += '<button class="chip' + (c.key === _stCat ? " on" : "") + '" data-act="status-cat" data-c="' + c.key + '">' + esc(c.label) + '</button>'; });
+    h += '</div>';
+    h += '<div class="status-grid' + (_stSize === "dp" ? " dp" : "") + '" id="statusGrid"></div>';
+    h += '</div>';
+    content.innerHTML = h; content.scrollTop = 0;
+    renderStatusGrid();
+    Analytics.track("status_open", { cat: _stCat });
+  }
+  function renderStatusGrid() {
+    var grid = $("#statusGrid"); if (!grid) return;
+    var nm = Store.getName(), html = "";
+    each(StatusMaker.templates, function (t) {
+      if (t.cat !== _stCat) return;
+      var url = StatusMaker.build(t.id, { name: nm, size: _stSize, thumb: true });
+      html += '<button class="status-thumb" data-act="status-open" data-id="' + t.id + '"><img src="' + url + '" alt="' + esc(t.label) + '"></button>';
+    });
+    grid.innerHTML = html || '<p class="muted center">इस श्रेणी में जल्द और डिज़ाइन…</p>';
+  }
+  function openStatusModal(id) {
+    _stCur = id;
+    var nm = Store.getName();
+    var url = StatusMaker.build(id, { name: nm, size: _stSize });
+    var h = '<div class="modal-card status-modal">' +
+      '<img class="status-preview" id="statusPrev" src="' + url + '">' +
+      '<input class="grp-inp" id="statusName" maxlength="20" placeholder="अपना नाम डालें" value="' + esc(nm) + '">' +
+      '<div class="status-sizes"><button class="chip' + (_stSize === "story" ? " on" : "") + '" data-act="status-msize" data-s="story">📱 Status</button>' +
+      '<button class="chip' + (_stSize === "dp" ? " on" : "") + '" data-act="status-msize" data-s="dp">🟣 DP</button></div>' +
+      '<div class="modal-btns"><button class="cta-btn wa" data-act="status-wa">🟢 WhatsApp</button>' +
+      '<button class="pill" data-act="status-save">⬇ सेव</button>' +
+      '<button class="pill" data-act="status-share">↗ शेयर</button></div>' +
+      '<button class="pill sm" data-act="close-modal">✕ बंद</button></div>';
+    modal(h);
+    var ni = $("#statusName");
+    if (ni) ni.addEventListener("input", function () { Store.setName(ni.value); statusRebuild(); });
+  }
+  function statusRebuild() {
+    var prev = $("#statusPrev"); if (!prev || !_stCur) return;
+    var ni = $("#statusName"), nm = ni ? ni.value : Store.getName();
+    prev.src = StatusMaker.build(_stCur, { name: nm, size: _stSize });
+  }
+
+  // ================= BHAKTI LEVEL / AURA =================
+  function viewLevel() {
+    setNav("meri"); setHeader({ title: "मेरी भक्ति यात्रा", back: true });
+    var lv = Level.forUser();
+    var h = '<div class="screen">';
+    h += '<div class="aura-wrap"><div class="aura-ring" style="--p:' + lv.progress + '"><div class="aura-in">' +
+      '<div class="aura-emoji">' + lv.emoji + '</div><div class="aura-title">' + esc(lv.title) + '</div></div></div></div>';
+    h += '<div class="aura-xp">✨ ' + fmtNum(lv.xp) + ' भक्ति अंक</div>';
+    if (!lv.isMax) h += '<div class="aura-next">अगला: ' + lv.nextEmoji + ' <b>' + esc(lv.next) + '</b> — सिर्फ़ ' + fmtNum(lv.toNext) + ' अंक दूर! 🔥</div>';
+    else h += '<div class="aura-next">🏆 सर्वोच्च स्तर प्राप्त! जय हो 🙏</div>';
+    h += '<div class="sec-label">भक्ति स्तर</div><div class="ladder">';
+    each(Level.levels, function (L, i) {
+      h += '<div class="ladder-row' + (i === lv.index ? " on" : "") + (i < lv.index ? " done" : "") + '">' +
+        '<span class="ladder-emoji">' + L.emoji + '</span><span class="ladder-title">' + esc(L.title) + '</span>' +
+        '<span class="ladder-min">' + fmtNum(L.min) + '+</span>' +
+        (i === lv.index ? '<span class="ladder-you">आप</span>' : (i < lv.index ? '<span class="ladder-tick">✓</span>' : '')) + '</div>';
+    });
+    h += '</div>';
+    h += '<div class="aura-tip">📿 जाप, 🔥 स्ट्रीक और 📖 पाठ से भक्ति अंक बढ़ते हैं।</div>';
+    h += '<button class="cta-btn" data-act="share-level">↗ अपनी यात्रा शेयर करें</button>';
+    h += '</div>';
+    content.innerHTML = h; content.scrollTop = 0;
+    Analytics.track("level_open", { level: lv.index });
+  }
+
   // ================= REMINDERS =================
   var DEFAULT_REMINDERS = [
     { id: "morning", enabled: true, hour: 7, minute: 0, title: "🙏 शुभ प्रभात — आज की भक्ति शुरू करें", target: "today" },
@@ -796,7 +881,7 @@
     h += '<div class="sec-label">भक्ति</div><div class="card-group">' + linkRow("🔔 रिमाइंडर", "reminders") + linkRow("🔥 स्ट्रीक", "streak") + linkRow("📿 जाप", "jaap") + '</div>';
     h += '<div class="sec-label">मोनेटाइज़ेशन</div><div class="card-group"><div class="set-row"><span>विज्ञापन हटाएँ (Premium)</span>' + (prem ? '<span class="badge on">सक्रिय</span>' : '<button class="pill sm" data-act="premium">देखें</button>') + '</div></div>';
     h += '<div class="sec-label">प्राइवेसी</div><div class="card-group"><div class="set-row"><span>गुमनाम एनालिटिक्स</span><label class="switch"><input type="checkbox" data-act="analytics"' + (s.analytics !== false ? " checked" : "") + '><span></span></label></div></div>';
-    h += '<div class="sec-label">ऐप</div><div class="card-group"><button class="set-row link-row" data-act="share-app"><span>↗ ऐप शेयर करें</span><span class="chev">›</span></button><div class="set-row muted"><span>Bhakti Daily</span><span>v3.6</span></div></div>';
+    h += '<div class="sec-label">ऐप</div><div class="card-group"><button class="set-row link-row" data-act="share-app"><span>↗ ऐप शेयर करें</span><span class="chev">›</span></button><div class="set-row muted"><span>Bhakti Daily</span><span>v3.7</span></div></div>';
     h += '</div>';
     content.innerHTML = h; content.scrollTop = 0;
   }
@@ -942,6 +1027,25 @@
       try { ShareCard.shareRashifal(Rashifal.forToday(rri)); Analytics.track("share_clicked", { kind: "rashifal" }); } catch (e) { toast("शेयर नहीं हो पाया"); }
       return;
     }
+    // ---- Status / DP maker ----
+    if (act === "status-cat") { _stCat = el.getAttribute("data-c"); viewStatus(); return; }
+    if (act === "status-size") { _stSize = el.getAttribute("data-s"); viewStatus(); return; }
+    if (act === "status-open") { openStatusModal(el.getAttribute("data-id")); return; }
+    if (act === "status-msize") { _stSize = el.getAttribute("data-s"); var _id = _stCur; closeModal(); openStatusModal(_id); return; }
+    if (act === "status-wa") {
+      try { var u = StatusMaker.build(_stCur, { name: Store.getName(), size: _stSize }); Bridge.shareWhatsApp(u, StatusMaker.caption(_stCur)); Analytics.track("share_clicked", { kind: "status", via: "wa" }); }
+      catch (e) { toast("शेयर नहीं हो पाया"); } return;
+    }
+    if (act === "status-share") {
+      try { var u2 = StatusMaker.build(_stCur, { name: Store.getName(), size: _stSize }); Bridge.shareImage(u2, StatusMaker.caption(_stCur)); Analytics.track("share_clicked", { kind: "status" }); }
+      catch (e) { toast("शेयर नहीं हो पाया"); } return;
+    }
+    if (act === "status-save") {
+      try { var u3 = StatusMaker.build(_stCur, { name: Store.getName(), size: _stSize }); var okS = Bridge.saveImage(u3, "bhakti-status"); toast(okS ? "गैलरी में सेव ⬇" : "सेव नहीं हुआ"); }
+      catch (e) {} return;
+    }
+    // ---- Bhakti Level ----
+    if (act === "share-level") { try { ShareCard.shareLevel(Level.forUser()); Analytics.track("share_clicked", { kind: "level" }); } catch (e) { toast("शेयर नहीं हो पाया"); } return; }
   }
   function groupErr(r) {
     var e = r && r.error;
