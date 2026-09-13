@@ -16,6 +16,7 @@ jagah, **pura offline** (bina internet ke bhi chalta hai).
 **✨ Khaas baatein:**
 • 🚩 **Hanuman Chalisa** — pura shuddh paath, badhe aur saaf akshar mein
 • 📿 **Chalisa, Aarti, Mantra** ka sangrah — Ganesh, Shiv, Durga, Lakshmi, Vishnu aur bhakti mantra
+• 🌅 **Aaj ka Rashifal** — sabhi 12 rashi ka roz ka fal (prem, karya, swasthya, shubh rang/ank/disha) + rashi ka **upay** seedhe app ke paath se juda
 • 🗓️ **Aaj ka Panchang** — tithi, paksha, Vikram Samvat, sूryoday/sूryast (apne shahar ke hisaab se)
 • 🕐 **Shubh Muhurat** — Choghadiya, Rahu Kaal aur Abhijit muhurat roz
 • 📿 **Digital Jaap Mala** — 11/21/51/108/1008 target, vibration + dhwani ke saath
@@ -46,7 +47,8 @@ hanuman chalisa, chalisa, aarti, mantra, bhakti, devotional, hindu, puja,
 hanuman chalisa hindi, daily mantra, shiv aarti, durga aarti, gayatri mantra,
 bhajan, panchang, vrat tyohar, offline chalisa, hanuman chalisa offline,
 jaap counter, mala counter, choghadiya, rahu kaal, shubh muhurat,
-live darshan, group jaap, family jaap, aaj ka panchang
+live darshan, group jaap, family jaap, aaj ka panchang,
+rashifal, aaj ka rashifal, daily horoscope hindi, rashi, horoscope
 
 ## Category
 Lifestyle (or Books & Reference)
@@ -61,6 +63,7 @@ Everyone
 4. `04-muhurat.png` — Shubh Choghadiya / Rahu Kaal
 5. `05-festivals.png` — Vrat & Tyohar list
 6. `06-blessing.png` — WhatsApp daily aashirwad card
+7. `07-rashifal.png` — Aaj ka Rashifal (12 rashi)
 
 Feature graphic (1024x500): `store-assets/feature-graphic-1024x500.png`
 Hi-res icon (512x512): `store-assets/playstore-icon-512.png`
@@ -69,7 +72,11 @@ Hi-res icon (512x512): `store-assets/playstore-icon-512.png`
 "रोज़ इसी समय भक्ति का स्मरण भेजने के लिए नोटिफिकेशन की अनुमति दें।
 आप कभी भी बंद कर सकते हैं।"
 
-## What's new (release notes v3.5)
+## What's new (release notes v3.6)
+• 🆕 🌅 आज का राशिफल — सभी 12 राशि का रोज़ का फल + राशि-अनुसार उपाय (पाठ से जुड़ा)
+• छोटे सुधार व स्थिरता
+
+### (v3.5)
 • 🆕 👨‍👩‍👧 परिवार / समूह जाप — सबका जाप एक साथ जुड़े, सामूहिक total + leaderboard
 • 🆕 🌅 रोज़ WhatsApp आशीर्वाद — नाम के साथ 1-tap शुभकामना कार्ड
 • 🆕 🕐 शुभ मुहूर्त — चौघड़िया, राहु काल, अभिजित

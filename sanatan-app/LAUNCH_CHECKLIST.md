@@ -3,16 +3,16 @@
 Ye **step-by-step** guide hai app ko Google Play par publish karke **kamai
 shuru** karne ke liye. Technical jaankari kam se kam rakhi hai. 🙏
 
-App abhi **ready + signed** hai (v3.5). Neeche jo ⬜ hai wo **aapko** karna hai
+App abhi **ready + signed** hai (v3.6). Neeche jo ⬜ hai wo **aapko** karna hai
 (zyada tar Google account/paisa wali cheezein — sirf aap kar sakte ho).
 
 ---
 
 ## 📦 0) Jo AB TAK ban chuka hai (ready)
-- ✅ **Signed App Bundle** (Play upload ke liye): `app-release.aab` (v3.5, code 8)
+- ✅ **Signed App Bundle** (Play upload ke liye): `app-release.aab` (v3.6, code 9)
 - ✅ **Signed APK** (khud phone me test ke liye): `app-release.apk`
 - ✅ **Upload keystore**: `keystore/bhakti-upload.keystore` — *isko sambhaal kar rakho (neeche step 1)*
-- ✅ **Feature graphic** (1024x500) + **6 framed screenshots** — `store-assets/`
+- ✅ **Feature graphic** (1024x500) + **7 framed screenshots** — `store-assets/`
 - ✅ **App icon** 512x512 — `store-assets/playstore-icon-512.png`
 - ✅ **Store listing text** (title, description, keywords) — `store-assets/PLAY_LISTING.md`
 - ✅ **Data Safety** answers — `store-assets/DATA_SAFETY.md`
@@ -73,7 +73,7 @@ aur inhe click karna bhi safe hai). Asli kamai ke liye:
 - ⬜ **Store listing** bharo (text `store-assets/PLAY_LISTING.md` se):
   - ⬜ App name, Short description, Full description
   - ⬜ App icon (512x512), Feature graphic (1024x500)
-  - ⬜ Phone screenshots (`store-assets/screenshots/` ki 6 files upload karo)
+  - ⬜ Phone screenshots (`store-assets/screenshots/` ki 7 files upload karo)
   - ⬜ Category: **Lifestyle** (ya Books & Reference), Email + Privacy Policy URL
 
 ---
@@ -93,7 +93,7 @@ aur inhe click karna bhi safe hai). Asli kamai ke liye:
 - ⬜ Console → **Production** (pehli baar **Closed testing** recommend hai) → **Create release**.
 - ⬜ **Play App Signing** ko **on** rehne do (default).
 - ⬜ `app-release.aab` upload karo.
-- ⬜ Release notes daalo (`PLAY_LISTING.md` ka "What's new v3.5").
+- ⬜ Release notes daalo (`PLAY_LISTING.md` ka "What's new v3.6").
 - ⬜ **Review** → **Rollout**. Pehli review me **2-7 din** lag sakte hain.
 
 ---
@@ -115,8 +115,8 @@ Output:
 - AAB → `app/build/outputs/bundle/release/app-release.aab`
 - APK → `app/build/outputs/apk/release/app-release.apk`
 
-> Har nayi release me `app/build.gradle` me **versionCode +1** (abhi 8 → 9) aur
-> `versionName` badlo (abhi "3.5").
+> Har nayi release me `app/build.gradle` me **versionCode +1** (abhi 9 → 10) aur
+> `versionName` badlo (abhi "3.6").
 
 ---
 

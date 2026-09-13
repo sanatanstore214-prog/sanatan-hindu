@@ -119,6 +119,16 @@
       var url = build({ title: days + " दिन की भक्ति", accent: "#E8590C", snippet: snip });
       if (window.Bridge) window.Bridge.shareImage(url, snip + "\n\n🚩 Bhakti Daily");
       return url;
+    },
+    shareRashifal: function (r) {
+      var snip = r.rashi.sym + " " + r.rashi.name + " राशि\n\n" + r.saamanya +
+        "\n\nशुभ रंग: " + r.color + " · शुभ अंक: " + r.ank;
+      var url = build({ title: "आज का राशिफल", accent: r.rashi.accent, snippet: snip });
+      var cap = "🌅 आज का राशिफल — " + r.rashi.sym + " " + r.rashi.name + "\n\n" + r.saamanya +
+        "\n\n🔸 शुभ रंग: " + r.color + " · शुभ अंक: " + r.ank + " · शुभ दिशा: " + r.disha +
+        "\n🕉️ उपाय: " + r.upayText + "\n\n🚩 Bhakti Daily — रोज़ का राशिफल व भक्ति";
+      if (window.Bridge) window.Bridge.shareImage(url, cap);
+      return url;
     }
   };
 })();

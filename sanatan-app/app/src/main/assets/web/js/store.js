@@ -108,6 +108,10 @@
     getCity: function () { return read("city", "delhi"); },
     setCity: function (k) { write("city", k); },
 
+    // ---- rashi (daily rashifal) ----
+    getRashi: function () { return read("rashi", ""); },
+    setRashi: function (k) { write("rashi", k || ""); },
+
     // ---- Jaap counter ----
     getJaapTarget: function () { return read("jaap_target", 108); },
     setJaapTarget: function (n) { write("jaap_target", n); },

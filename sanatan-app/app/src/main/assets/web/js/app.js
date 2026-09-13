@@ -92,6 +92,7 @@
     if (r.name === "wall") return viewWallpapers();
     if (r.name === "blessing") return viewBlessing();
     if (r.name === "muhurat") return viewMuhurat();
+    if (r.name === "rashifal") return viewRashifal();
     if (r.name === "darshan") return viewDarshan();
     if (r.name === "darshand") return viewDarshanDetail(r.idx);
     return viewHome();
@@ -146,6 +147,9 @@
     h += muhuratRow;
     h += '<button class="row-card" data-go="darshan"><span class="row-ico" style="background:#C2185B22;color:#C2185B">📺</span>' +
       '<span class="row-body"><b>लाइव दर्शन</b><small>काशी · महाकाल · वैष्णो देवी व अन्य</small></span><span class="live-dot"></span><span class="chev">›</span></button>';
+    var rk0 = Store.getRashi(), rObj = rk0 ? Rashifal.byKey(rk0) : null;
+    h += '<button class="row-card" data-go="rashifal"><span class="row-ico" style="background:#7E57C222;color:#7E57C2">🌅</span>' +
+      '<span class="row-body"><b>आज का राशिफल</b><small>' + (rObj ? (rObj.sym + ' ' + esc(rObj.name) + ' — आज का फल देखें') : 'अपनी राशि चुनें · सभी 12 राशि') + '</small></span><span class="chev">›</span></button>';
 
     h += '<div class="sec-label">आज की भक्ति</div>';
     h += '<button class="today-card" data-open="' + esc(t.id) + '" style="--accent:' + t.accent + '">' +
@@ -616,6 +620,7 @@
     h += '<div class="card-group">' +
       '<button class="set-row link-row" data-go="group"><span>' + grpLabel + '</span>' +
       (grp ? '<span class="chev"><span class="live-dot"></span> ' + esc(grp.code) + ' ›</span>' : '<span class="chev">जुड़ें ›</span>') + '</button>' +
+      linkRow("🌅 आज का राशिफल", "rashifal") +
       linkRow("★ पसंदीदा", "favs") + linkRow("🔥 भक्ति स्ट्रीक", "streak") +
       linkRow("📿 जाप काउंटर", "jaap") + linkRow("🖼️ वॉलपेपर", "wall") +
       linkRow("🔔 रिमाइंडर (" + remOn + " चालू)", "reminders") + linkRow("⚙ सेटिंग", "settings") + '</div>';
@@ -709,6 +714,47 @@
     });
   }
 
+  // ================= RASHIFAL (daily horoscope) =================
+  function starStr(n) { var s = ""; for (var i = 0; i < 5; i++) s += (i < n ? "★" : "☆"); return s; }
+  function viewRashifal() {
+    setNav("home"); setHeader({ title: "आज का राशिफल", back: true });
+    var key = Store.getRashi();
+    if (!key || Rashifal.index(key) === -1) return rashiPicker();
+    var ri = Rashifal.index(key), r = Rashifal.forToday(ri), now = new Date(), acc = r.rashi.accent;
+    var h = '<div class="screen">';
+    h += '<div class="rf-hero" style="--accent:' + acc + '"><div class="rf-sym">' + r.rashi.sym + '</div>' +
+      '<div class="rf-hd"><b>' + esc(r.rashi.name) + ' राशि</b><small>' + esc(r.rashi.dates) + ' · स्वामी ' + esc(r.rashi.graha) + '</small></div>' +
+      '<button class="rf-change" data-act="rashi-change">बदलें</button></div>';
+    h += '<div class="rf-date">' + HIN_DAYS[now.getDay()] + ', ' + now.getDate() + ' ' + HIN_MONTHS_F[now.getMonth()] + ' ' + now.getFullYear() +
+      ' &nbsp;·&nbsp; <span class="rf-stars">' + starStr(r.stars) + '</span></div>';
+    h += '<div class="rf-main" style="--accent:' + acc + '"><b>आज का दिन</b><p>' + esc(r.saamanya) + '</p></div>';
+    h += '<div class="rf-sec">' +
+      '<div class="rf-item"><span class="rf-ico">❤️</span><div><b>प्रेम / परिवार</b><p>' + esc(r.prem) + '</p></div></div>' +
+      '<div class="rf-item"><span class="rf-ico">💼</span><div><b>कार्य / धन</b><p>' + esc(r.karya) + '</p></div></div>' +
+      '<div class="rf-item"><span class="rf-ico">🌿</span><div><b>स्वास्थ्य</b><p>' + esc(r.swasthya) + '</p></div></div></div>';
+    h += '<div class="rf-luck"><div><small>शुभ रंग</small><b>' + esc(r.color) + '</b></div>' +
+      '<div><small>शुभ अंक</small><b>' + r.ank + '</b></div>' +
+      '<div><small>शुभ दिशा</small><b>' + esc(r.disha) + '</b></div></div>';
+    h += '<button class="rf-upay" data-open="' + esc(r.upayId) + '" style="--accent:' + acc + '"><span class="rf-upay-ico">🕉️</span>' +
+      '<span class="rf-upay-body"><b>आज का उपाय</b><small>' + esc(r.upayText) + '</small></span><span class="chev">›</span></button>';
+    h += '<button class="cta-btn" data-act="share-rashifal">↗ राशिफल शेयर करें</button>';
+    h += '<p class="muted small center rf-note">🔸 राशिफल प्रेरक मार्गदर्शन है (पंचांग आधारित) — शुभकामना हेतु।</p>';
+    h += '</div>';
+    content.innerHTML = h; content.scrollTop = 0;
+    Analytics.track("rashifal_open", { rashi: key });
+  }
+  function rashiPicker() {
+    setNav("home"); setHeader({ title: "अपनी राशि चुनें", back: true });
+    var h = '<div class="screen"><p class="muted center">अपनी राशि चुनें — रोज़ का राशिफल यहीं मिलेगा 🌅</p><div class="rf-grid">';
+    each(Rashifal.list, function (r) {
+      h += '<button class="rf-card" data-act="rashi-pick" data-k="' + r.key + '" style="--accent:' + r.accent + '">' +
+        '<span class="rf-card-sym">' + r.sym + '</span><b>' + esc(r.name) + '</b><small>' + esc(r.dates) + '</small></button>';
+    });
+    h += '</div><p class="muted small center">राशि नहीं पता? ऊपर जन्म-तारीख़ से मिला लें।</p></div>';
+    content.innerHTML = h; content.scrollTop = 0;
+    Analytics.track("rashifal_open", { rashi: "picker" });
+  }
+
   // ================= REMINDERS =================
   var DEFAULT_REMINDERS = [
     { id: "morning", enabled: true, hour: 7, minute: 0, title: "🙏 शुभ प्रभात — आज की भक्ति शुरू करें", target: "today" },
@@ -750,7 +796,7 @@
     h += '<div class="sec-label">भक्ति</div><div class="card-group">' + linkRow("🔔 रिमाइंडर", "reminders") + linkRow("🔥 स्ट्रीक", "streak") + linkRow("📿 जाप", "jaap") + '</div>';
     h += '<div class="sec-label">मोनेटाइज़ेशन</div><div class="card-group"><div class="set-row"><span>विज्ञापन हटाएँ (Premium)</span>' + (prem ? '<span class="badge on">सक्रिय</span>' : '<button class="pill sm" data-act="premium">देखें</button>') + '</div></div>';
     h += '<div class="sec-label">प्राइवेसी</div><div class="card-group"><div class="set-row"><span>गुमनाम एनालिटिक्स</span><label class="switch"><input type="checkbox" data-act="analytics"' + (s.analytics !== false ? " checked" : "") + '><span></span></label></div></div>';
-    h += '<div class="sec-label">ऐप</div><div class="card-group"><button class="set-row link-row" data-act="share-app"><span>↗ ऐप शेयर करें</span><span class="chev">›</span></button><div class="set-row muted"><span>Bhakti Daily</span><span>v3.5</span></div></div>';
+    h += '<div class="sec-label">ऐप</div><div class="card-group"><button class="set-row link-row" data-act="share-app"><span>↗ ऐप शेयर करें</span><span class="chev">›</span></button><div class="set-row muted"><span>Bhakti Daily</span><span>v3.6</span></div></div>';
     h += '</div>';
     content.innerHTML = h; content.scrollTop = 0;
   }
@@ -887,6 +933,15 @@
         '<button class="cta-btn danger" data-act="grp-leave-yes">हाँ, छोड़ें</button></div></div>'); return;
     }
     if (act === "grp-leave-yes") { Store.clearGroup(); closeModal(); Analytics.track("group_left", {}); go("meri"); toast("समूह छोड़ दिया"); return; }
+    // ---- Rashifal ----
+    if (act === "rashi-pick") { Store.setRashi(el.getAttribute("data-k")); Analytics.track("rashi_set", { rashi: el.getAttribute("data-k") }); viewRashifal(); return; }
+    if (act === "rashi-change") { rashiPicker(); return; }
+    if (act === "share-rashifal") {
+      var rk = Store.getRashi(), rri = Rashifal.index(rk);
+      if (rri === -1) { toast("पहले राशि चुनें"); return; }
+      try { ShareCard.shareRashifal(Rashifal.forToday(rri)); Analytics.track("share_clicked", { kind: "rashifal" }); } catch (e) { toast("शेयर नहीं हो पाया"); }
+      return;
+    }
   }
   function groupErr(r) {
     var e = r && r.error;

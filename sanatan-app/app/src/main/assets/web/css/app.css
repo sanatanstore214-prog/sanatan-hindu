@@ -412,3 +412,33 @@ body.reading #miniPlayer, body.focus-mode #miniPlayer { bottom: 8px; }
 .nudge.danger { border-color: #c0392b; color: #c0392b; }
 .cta-btn.danger { background: linear-gradient(120deg, #c0392b, #922b21); }
 .grp-added { background: rgba(31,170,83,.12); color: #0e8a3e; border-radius: 10px; padding: 8px 10px; font-size: 13px; font-weight: 700; margin-top: 6px; }
+
+/* ---- rashifal (daily horoscope) ---- */
+.rf-hero { display: flex; align-items: center; gap: 14px; background: linear-gradient(135deg, var(--accent), rgba(0,0,0,.28)); color: #fff; border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
+.rf-sym { font-size: 44px; line-height: 1; }
+.rf-hd { flex: 1; }
+.rf-hd b { font-size: 21px; font-weight: 800; display: block; }
+.rf-hd small { opacity: .92; font-size: 12.5px; }
+.rf-change { background: rgba(255,255,255,.2); color: #fff; border-radius: 18px; padding: 7px 14px; font-size: 13px; font-weight: 700; }
+.rf-date { text-align: center; color: var(--muted); font-size: 13px; font-weight: 700; margin: 12px 0 4px; }
+.rf-stars { color: var(--gold); letter-spacing: 2px; }
+.rf-main { background: var(--surface); border-radius: var(--radius); padding: 16px; margin-top: 10px; box-shadow: var(--shadow-sm); border-left: 6px solid var(--accent); }
+.rf-main b { color: var(--accent); font-size: 14px; }
+.rf-main p { font-size: 16px; line-height: 1.7; margin-top: 4px; }
+.rf-sec { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.rf-item { display: flex; gap: 12px; background: var(--surface); border-radius: 14px; padding: 13px 14px; box-shadow: var(--shadow-sm); }
+.rf-ico { font-size: 22px; flex-shrink: 0; }
+.rf-item b { font-size: 14px; } .rf-item p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-top: 2px; }
+.rf-luck { display: flex; gap: 10px; margin-top: 12px; }
+.rf-luck > div { flex: 1; background: var(--surface-2); border-radius: 14px; padding: 12px 8px; text-align: center; box-shadow: var(--shadow-sm); }
+.rf-luck small { display: block; color: var(--muted); font-size: 11.5px; font-weight: 700; margin-bottom: 3px; }
+.rf-luck b { font-size: 15px; color: var(--text); }
+.rf-upay { width: 100%; text-align: left; display: flex; align-items: center; gap: 13px; margin-top: 12px; background: var(--surface); border-radius: 14px; padding: 14px; box-shadow: var(--shadow-sm); border-left: 5px solid var(--accent); }
+.rf-upay-ico { font-size: 26px; }
+.rf-upay-body { flex: 1; } .rf-upay-body b { display: block; font-size: 15px; } .rf-upay-body small { color: var(--muted); font-size: 13px; }
+.rf-note { margin-top: 14px; }
+.rf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+.rf-card { background: var(--surface); border-radius: 16px; padding: 14px 6px; box-shadow: var(--shadow-sm); border-top: 4px solid var(--accent); display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.rf-card:active { transform: scale(.97); }
+.rf-card-sym { font-size: 30px; color: var(--accent); }
+.rf-card b { font-size: 14.5px; } .rf-card small { font-size: 10px; color: var(--muted); text-align: center; line-height: 1.3; }
