@@ -1,22 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Edge-to-edge (Android 15/16): insets are applied in MainActivity.setupEdgeToEdge().
+     Root has no background so the royal launch screen shows until the web UI paints. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/saffron">
+    android:orientation="vertical">
+
+    <!-- Status-bar area: royal maroon, matches the app header -->
+    <View
+        android:id="@+id/status_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/royal_maroon" />
 
     <WebView
         android:id="@+id/webview"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:visibility="invisible" />
 
-    <!-- Banner ad yahan lagta hai -->
+    <!-- Banner ad. paddingTop keeps it visually separated from the bottom nav
+         buttons (AdMob accidental-click guidance). -->
     <FrameLayout
         android:id="@+id/ad_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:background="@color/cream" />
+        android:paddingTop="8dp"
+        android:visibility="invisible" />
 
 </LinearLayout>

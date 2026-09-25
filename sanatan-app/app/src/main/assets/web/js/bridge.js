@@ -14,10 +14,31 @@
   var Bridge = {
     isNative: function () { return !!A(); },
 
-    // Ads
-    maybeInterstitial: function () { call("onNavigate"); },
-    showInterstitial: function () { call("showInterstitial"); },
+    // Ads (native paces everything: count + time-gap + session grace — see AdConfig.java)
+    maybeInterstitial: function () { call("onNavigate"); },      // chhota natural break
+    showInterstitial: function () { call("showInterstitial"); },  // bada natural break (paath/mala poora)
     setAdsEnabled: function (on) { call("setAdsEnabled", [!!on]); },
+
+    // Rewarded — SIRF user ke tap par. Promise -> { ok, reason }.
+    // reason: ok | closed (poora nahi dekha) | not_ready | fail | web (browser: ads nahi, inaam de do)
+    isRewardedReady: function () { return call("isRewardedReady", [], false) === true; },
+    preloadRewarded: function () { call("preloadRewarded"); },
+    showRewarded: function (tag) {
+      tag = String(tag || "reward");
+      var a = A();
+      if (!a || typeof a.showRewarded !== "function") return Promise.resolve({ ok: true, reason: "web" });
+      return new Promise(function (resolve) {
+        Bridge._rw[tag] = resolve;
+        try { a.showRewarded(tag); } catch (e) { delete Bridge._rw[tag]; resolve({ ok: false, reason: "fail" }); }
+        // safety: agar native kabhi callback na de
+        setTimeout(function () { if (Bridge._rw[tag] === resolve) { delete Bridge._rw[tag]; resolve({ ok: false, reason: "timeout" }); } }, 120000);
+      });
+    },
+    _rw: {},
+
+    // Privacy options (UMP) — EEA/UK users
+    isPrivacyOptionsRequired: function () { return call("isPrivacyOptionsRequired", [], false) === true; },
+    showPrivacyOptions: function () { call("showPrivacyOptions"); },
 
     // Sharing
     shareText: function (text) {
@@ -111,6 +132,12 @@
       }).catch(function () { return { status: -1, text: "" }; });
     },
     _http: {}
+  };
+
+  // Native callback target for Bridge.showRewarded
+  window.__reward = function (tag, ok, reason) {
+    var cb = Bridge._rw[tag];
+    if (cb) { delete Bridge._rw[tag]; try { cb({ ok: !!ok, reason: String(reason || "") }); } catch (e) {} }
   };
 
   // Native callback target for Bridge.http

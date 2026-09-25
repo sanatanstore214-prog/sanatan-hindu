@@ -63,14 +63,30 @@
     if (!h) return { name: "home" };
     var p = h.split("/");
     if (p[0] === "read") return { name: "read", id: p[1] };
-    if (p[0] === "lib") return { name: "lib", type: p[1] || "chalisa" };
+    if (p[0] === "lib") return { name: "lib", type: p[1] || "all" };
     if (p[0] === "festd") return { name: "festd", idx: parseInt(p[1], 10) };
     if (p[0] === "darshand") return { name: "darshand", idx: parseInt(p[1], 10) };
     if (p[0] === "today") { var t = Recommend.today(); return { name: "read", id: t.item.id }; }
     return { name: p[0] };
   }
 
+  // ---- Interstitial sirf "natural break" par (AdMob policy): content khatam karke nikalte samay.
+  // Kabhi launch par nahi, padhte/sunte samay nahi. Native side count + 90s gap + 45s grace lagata hai.
+  var CONTENT_ROUTES = { festd: 1, darshand: 1, rashifal: 1, muhurat: 1, status: 1, level: 1, blessing: 1,
+    wall: 1, group: 1, search: 1, favs: 1, streak: 1, lib: 1, fest: 1, jaap: 1, darshan: 1 };
+  var _prevRoute = null, _routeAt = 0;
+  function adBreak(next) {
+    var prev = _prevRoute, spent = Date.now() - _routeAt;
+    _prevRoute = next; _routeAt = Date.now();
+    if (!prev || prev === next) return;
+    if (_aud.state === "playing" || _aud.state === "loading" || window._ttsOn) return;  // audio chal raha
+    if (document.getElementById("modalBg")) return;
+    if (prev === "read" && spent >= 25000) Bridge.showInterstitial();        // paath poora padha = bada break
+    else if (CONTENT_ROUTES[prev]) Bridge.maybeInterstitial();               // chhota break (har 3rd)
+  }
+
   function render() {
+    try { adBreak(parseRoute().name); } catch (e) {}
     stopAutoScroll(); stopAudio();
     try { if (window._ttsOn) { Bridge.stopSpeak(); window._ttsOn = false; } } catch (e) {}
     _focus = false;
@@ -145,6 +161,7 @@
     h += '<section class="hero compact"><div class="hero-top"><span class="hero-ico">' + g.ico + '</span>' +
       '<div><div class="hero-greet">' + esc(g.t) + '</div><div class="hero-date">आज का सनातन</div></div>' +
       '<button class="streak-chip" data-go="streak">🔥 ' + (st.count || 0) + '</button></div></section>';
+    h += punyaCardHtml();
     h += pan;
     h += muhuratRow;
     h += '<button class="row-card" data-go="darshan"><span class="row-ico" style="background:#C2185B22;color:#C2185B">📺</span>' +
@@ -169,7 +186,7 @@
 
     h += '<div class="tiles">' +
       tile("📿", "जाप", "jaap", "#E8590C") +
-      tile("📚", "पुस्तकालय", "lib/chalisa", "#5C6BC0") +
+      tile("📚", "पुस्तकालय", "lib/all", "#5C6BC0") +
       tile("📅", "त्योहार", "fest", "#C2185B") +
       tile("🖼️", "वॉलपेपर", "wall", "#C9A227") + '</div>';
 
@@ -193,7 +210,9 @@
     h += '</div>';
     content.innerHTML = h; content.scrollTop = 0;
     Analytics.track("app_open", {});
+    if (needsOnboarding()) { showOnboarding(); return; }
     if (!Store.getName() && !Store.get("namePrompted", false)) { Store.set("namePrompted", true); setTimeout(function () { if (parseRoute().name === "home" && !document.getElementById("modalBg")) showNameModal(); }, 900); }
+    setTimeout(function () { if (parseRoute().name === "home") maybeStreakRakshak(); }, 700);
   }
 
   // ================= DAILY BLESSING (WhatsApp loop) =================
@@ -321,10 +340,13 @@
         grpLine = '<p class="grp-added">👨‍👩‍👧 <b>' + esc(grp.name) + '</b> के सामूहिक जाप में जुड़ गया ✓</p>';
         if (Group.isConfigured()) { try { Group.contribute(target); } catch (e) {} }
       }
+      var x2 = Punya.jaap2xLeft() > 0
+        ? '<button class="cta-btn rw" data-act="jaap-2x" data-t="' + target + '">📺 1 विज्ञापन देखें → पुण्य दुगना (+' + target + ')</button>' : '';
+      if (x2) Bridge.preloadRewarded();
       modal('<div class="modal-card celebrate"><div class="m-ico">🙏</div><h2>' + target + ' जाप पूर्ण!</h2>' +
-        '<p>आपने आज ' + target + ' बार जाप किया।<br>🔥 ' + res.count + ' दिन की भक्ति।</p>' + grpLine +
+        '<p>आपने आज ' + target + ' बार जाप किया।<br>🔥 ' + res.count + ' दिन की भक्ति।</p>' + grpLine + x2 +
         '<div class="modal-btns"><button class="pill" data-act="share-jaap" data-t="' + target + '">↗ शेयर</button>' +
-        '<button class="cta-btn" data-act="close-modal">जय हो 🚩</button></div></div>');
+        '<button class="cta-btn" data-act="close-celebrate">जय हो 🚩</button></div></div>');
       if (res.milestone) { /* streak milestone bhi */ }
     }
   }
@@ -342,17 +364,22 @@
   // ================= LIBRARY =================
   function viewLibrary(type) {
     setNav("lib"); setHeader({ title: "पुस्तकालय", back: false });
-    var types = ["chalisa", "aarti", "mantra"];
+    var types = ["all", "chalisa", "aarti", "mantra"];
+    if (types.indexOf(type) === -1) type = "all";
     var h = '<div class="screen"><div class="segbar">';
-    each(types, function (tp) { h += '<button class="seg' + (tp === type ? " on" : "") + '" data-go="lib/' + tp + '">' + esc(TYPE_LABEL[tp]) + '</button>'; });
+    each(types, function (tp) { h += '<button class="seg' + (tp === type ? " on" : "") + '" data-go="lib/' + tp + '">' + esc(tp === "all" ? "सब" : TYPE_LABEL[tp]) + '</button>'; });
     h += '</div><div class="list">';
+    // Sirf pramanit (ready) paath dikhao; jo abhi nahi hain unke liye ek imaandaar note — dead tiles nahi.
+    var soonCount = 0;
     each(DATA.items, function (it) {
-      if (it.type !== type) return;
-      var soon = it.status !== "ready";
-      h += '<button class="list-card' + (soon ? " soon" : "") + '" ' + (soon ? 'data-soon="1"' : 'data-open="' + esc(it.id) + '"') + ' style="--accent:' + it.accent + '">' +
-        '<span class="lc-ico">' + it.icon + '</span><span class="lc-body"><b>' + esc(it.title) + '</b><small>' + esc((DATA.deities[it.deity] || {}).name || it.subtitle || "") + '</small></span>' +
-        (soon ? '<span class="badge">जल्द</span>' : (Store.isFav(it.id) ? '<span class="chev fav">★</span>' : '<span class="chev">›</span>')) + '</button>';
+      if (type !== "all" && it.type !== type) return;
+      if (it.status !== "ready") { soonCount++; return; }
+      h += '<button class="list-card" data-open="' + esc(it.id) + '" style="--accent:' + it.accent + '">' +
+        '<span class="lc-ico">' + it.icon + '</span><span class="lc-body"><b>' + esc(it.title) + '</b><small>' +
+        esc((type === "all" ? TYPE_LABEL[it.type] + " · " : "") + ((DATA.deities[it.deity] || {}).name || it.subtitle || "")) + '</small></span>' +
+        (Store.isFav(it.id) ? '<span class="chev fav">★</span>' : '<span class="chev">›</span>') + '</button>';
     });
+    if (soonCount) h += '<div class="soon-note">📖 ' + soonCount + ' और पाठ जल्द — हम सिर्फ़ प्रमाणित, शुद्ध पाठ ही जोड़ते हैं 🙏</div>';
     h += '</div></div>';
     content.innerHTML = h; content.scrollTop = 0;
     Analytics.track("content_open", { section: "library", type: type });
@@ -591,7 +618,7 @@
   function viewFavorites() {
     setNav("meri"); setHeader({ title: "पसंदीदा", back: true });
     var favs = Store.getFavs();
-    if (!favs.length) { content.innerHTML = '<div class="screen"><div class="empty"><div class="empty-ico">☆</div><h2>अभी कोई पसंदीदा नहीं</h2><p>कोई पाठ खोलकर ☆ दबाएँ।</p><button class="pill" data-go="lib/chalisa">पुस्तकालय</button></div></div>'; return; }
+    if (!favs.length) { content.innerHTML = '<div class="screen"><div class="empty"><div class="empty-ico">☆</div><h2>अभी कोई पसंदीदा नहीं</h2><p>कोई पाठ खोलकर ☆ दबाएँ।</p><button class="pill" data-go="lib/all">पुस्तकालय</button></div></div>'; return; }
     var arr = []; each(favs, function (id) { var it = item(id); if (it) arr.push(it); });
     content.innerHTML = '<div class="screen">' + listHtml(arr) + '</div>';
   }
@@ -766,11 +793,22 @@
   }
 
   // ================= STATUS / DP MAKER (viral) =================
-  var _stCat = "morning", _stSize = "story", _stCur = null;
+  var _stCat = "morning", _stSize = "story", _stCur = null, _stPhoto = null, _stPending = null;
+  function stPhoto() {
+    if (_stPhoto) return _stPhoto;
+    var d = Store.get("status_photo", "");
+    if (d) { var im = new Image(); im.src = d; _stPhoto = im; }
+    return _stPhoto;
+  }
   function viewStatus() {
     setNav("home"); setHeader({ title: "भक्ति Status", back: true });
     var h = '<div class="screen">';
-    h += '<p class="muted center">नाम वाले सुंदर Status/DP — WhatsApp व Insta पर शेयर करें 🔥</p>';
+    h += '<p class="muted center">नाम + अपनी फोटो वाले सुंदर Status/DP — WhatsApp व Insta पर शेयर करें 🔥</p>';
+    var left = Punya.premiumStatusLeftHrs();
+    h += Punya.premiumStatusUnlocked()
+      ? '<div class="prem-strip on">✨ Premium designs अनलॉक' + (left ? ' — ' + left + ' घंटे बाकी' : '') + '</div>'
+      : '<button class="prem-strip" data-act="status-unlock">✨ Premium gold designs — 📺 1 विज्ञापन = 24 घंटे अनलॉक ›</button>';
+    Bridge.preloadRewarded();
     h += '<div class="seg2"><button class="seg' + (_stSize === "story" ? " on" : "") + '" data-act="status-size" data-s="story">📱 Status</button>' +
       '<button class="seg' + (_stSize === "dp" ? " on" : "") + '" data-act="status-size" data-s="dp">🟣 DP</button></div>';
     h += '<div class="status-cats">';
@@ -784,35 +822,79 @@
   }
   function renderStatusGrid() {
     var grid = $("#statusGrid"); if (!grid) return;
-    var nm = Store.getName(), html = "";
-    each(StatusMaker.templates, function (t) {
-      if (t.cat !== _stCat) return;
+    var nm = Store.getName(), html = "", unlocked = Punya.premiumStatusUnlocked();
+    // premium pehle (zyada aakarshak), phir free
+    var list = StatusMaker.templates.filter(function (t) { return t.cat === _stCat; });
+    list.sort(function (a, b) { return (b.premium ? 1 : 0) - (a.premium ? 1 : 0); });
+    each(list, function (t) {
       var url = StatusMaker.build(t.id, { name: nm, size: _stSize, thumb: true });
-      html += '<button class="status-thumb" data-act="status-open" data-id="' + t.id + '"><img src="' + url + '" alt="' + esc(t.label) + '"></button>';
+      var locked = t.premium && !unlocked;
+      html += '<button class="status-thumb' + (t.premium ? " prem" : "") + (locked ? " locked" : "") + '" data-act="status-open" data-id="' + t.id + '">' +
+        '<img src="' + url + '" alt="' + esc(t.label) + '">' +
+        (t.premium ? '<span class="st-badge">' + (locked ? '🔒 ' : '') + '✨ Premium</span>' : '') + '</button>';
     });
     grid.innerHTML = html || '<p class="muted center">इस श्रेणी में जल्द और डिज़ाइन…</p>';
   }
+  function showStatusUnlock(pendingId) {
+    _stPending = pendingId || null;
+    Bridge.preloadRewarded();
+    modal('<div class="modal-card"><div class="m-ico">✨</div><h2>Premium Designs</h2>' +
+      '<p>शाही <b>gold</b> व <b>glow</b> designs — सबसे सुंदर Status/DP 👑</p>' +
+      '<p class="muted small">📺 1 विज्ञापन देखें → <b>24 घंटे</b> सभी Premium designs अनलॉक।</p>' +
+      '<div class="modal-btns"><button class="pill" data-act="close-modal">बाद में</button>' +
+      '<button class="cta-btn rw" data-act="status-unlock-go">📺 विज्ञापन देखें → अनलॉक</button></div></div>');
+  }
   function openStatusModal(id) {
     _stCur = id;
-    var nm = Store.getName();
-    var url = StatusMaker.build(id, { name: nm, size: _stSize });
+    var nm = Store.getName(), ph = stPhoto();
+    var url = StatusMaker.build(id, { name: nm, size: _stSize, photo: ph });
     var h = '<div class="modal-card status-modal">' +
       '<img class="status-preview" id="statusPrev" src="' + url + '">' +
       '<input class="grp-inp" id="statusName" maxlength="20" placeholder="अपना नाम डालें" value="' + esc(nm) + '">' +
       '<div class="status-sizes"><button class="chip' + (_stSize === "story" ? " on" : "") + '" data-act="status-msize" data-s="story">📱 Status</button>' +
-      '<button class="chip' + (_stSize === "dp" ? " on" : "") + '" data-act="status-msize" data-s="dp">🟣 DP</button></div>' +
+      '<button class="chip' + (_stSize === "dp" ? " on" : "") + '" data-act="status-msize" data-s="dp">🟣 DP</button>' +
+      '<button class="chip" data-act="status-photo">📸 ' + (ph ? 'फोटो बदलें' : 'अपनी फोटो') + '</button>' +
+      (ph ? '<button class="chip" data-act="status-photo-del">✕ फोटो</button>' : '') + '</div>' +
+      '<input type="file" accept="image/*" id="stPhotoIn" hidden>' +
       '<div class="modal-btns"><button class="cta-btn wa" data-act="status-wa">🟢 WhatsApp</button>' +
       '<button class="pill" data-act="status-save">⬇ सेव</button>' +
       '<button class="pill" data-act="status-share">↗ शेयर</button></div>' +
+      '<p class="muted small center">🔒 फोटो सिर्फ़ आपके फ़ोन में रहती है।</p>' +
       '<button class="pill sm" data-act="close-modal">✕ बंद</button></div>';
     modal(h);
     var ni = $("#statusName");
     if (ni) ni.addEventListener("input", function () { Store.setName(ni.value); statusRebuild(); });
+    var fi = $("#stPhotoIn");
+    if (fi) fi.addEventListener("change", function () { if (fi.files && fi.files[0]) loadStatusPhoto(fi.files[0]); });
+  }
+  // फोटो -> 640px तक छोटा JPEG (तेज़ + localStorage में सुरक्षित, फ़ोन से बाहर नहीं जाता)
+  function loadStatusPhoto(file) {
+    try {
+      var rd = new FileReader();
+      rd.onload = function () {
+        var im = new Image();
+        im.onload = function () {
+          try {
+            var max = 640, w = im.naturalWidth, hh = im.naturalHeight, k = Math.min(1, max / Math.max(w, hh));
+            var cv = document.createElement("canvas"); cv.width = Math.round(w * k); cv.height = Math.round(hh * k);
+            var cx = cv.getContext("2d"); if (!cx) return;
+            cx.drawImage(im, 0, 0, cv.width, cv.height);
+            var small = cv.toDataURL("image/jpeg", 0.86);
+            Store.set("status_photo", small);
+            var im2 = new Image(); im2.onload = function () { _stPhoto = im2; var id = _stCur; closeModal(); openStatusModal(id); toast("📸 फोटो लग गई!"); };
+            im2.src = small;
+            Analytics.track("status_photo_added", {});
+          } catch (e) { toast("फोटो नहीं लग पाई"); }
+        };
+        im.src = rd.result;
+      };
+      rd.readAsDataURL(file);
+    } catch (e) { toast("फोटो नहीं लग पाई"); }
   }
   function statusRebuild() {
     var prev = $("#statusPrev"); if (!prev || !_stCur) return;
     var ni = $("#statusName"), nm = ni ? ni.value : Store.getName();
-    prev.src = StatusMaker.build(_stCur, { name: nm, size: _stSize });
+    prev.src = StatusMaker.build(_stCur, { name: nm, size: _stSize, photo: stPhoto() });
   }
 
   // ================= BHAKTI LEVEL / AURA =================
@@ -833,11 +915,158 @@
         (i === lv.index ? '<span class="ladder-you">आप</span>' : (i < lv.index ? '<span class="ladder-tick">✓</span>' : '')) + '</div>';
     });
     h += '</div>';
-    h += '<div class="aura-tip">📿 जाप, 🔥 स्ट्रीक और 📖 पाठ से भक्ति अंक बढ़ते हैं।</div>';
+    h += '<div class="aura-tip">📿 जाप, 🔥 स्ट्रीक, 📖 पाठ और 🎁 दैनिक पुण्य से भक्ति अंक बढ़ते हैं।<br><small>(इनमें ' + fmtNum(Punya.bonus()) + ' पुण्य अंक शामिल)</small></div>';
     h += '<button class="cta-btn" data-act="share-level">↗ अपनी यात्रा शेयर करें</button>';
     h += '</div>';
     content.innerHTML = h; content.scrollTop = 0;
     Analytics.track("level_open", { level: lv.index });
+  }
+
+  // ================= PUNYA (daily reward) + REWARDED ADS =================
+  // Rewarded: sirf user ke tap par, inaam pehle saaf likha, inaam sirf app ke andar.
+  function watchAd(tag, onOk) {
+    Analytics.track("rewarded_request", { tag: tag });
+    if (Bridge.isNative()) toast("📺 विज्ञापन खुल रहा है…");
+    Bridge.showRewarded(tag).then(function (r) {
+      if (r.ok) { Analytics.track("rewarded_ok", { tag: tag }); onOk(r); return; }
+      if (r.reason === "closed") toast("पूरा विज्ञापन देखने पर ही इनाम मिलता है 🙏");
+      else if (r.reason === "not_ready") toast("विज्ञापन तैयार हो रहा है — कुछ सेकंड बाद फिर टैप करें");
+      else toast("अभी विज्ञापन उपलब्ध नहीं — थोड़ी देर बाद कोशिश करें");
+    });
+  }
+
+  function punyaCardHtml() {
+    var d = Punya.daily();
+    if (!d.claimedToday) {
+      return '<button class="punya-card ready" data-act="punya-open"><span class="punya-ico">🎁</span>' +
+        '<span class="punya-body"><b>आज का पुण्य लें</b><small>दिन ' + d.day + '/7 · +' + d.reward + ' पुण्य अंक' + (d.day === 7 ? ' 🔱' : '') + '</small></span>' +
+        '<span class="punya-go">लें ›</span></button>';
+    }
+    if (!d.doubledToday) {
+      return '<button class="punya-card" data-act="punya-open"><span class="punya-ico">✓</span>' +
+        '<span class="punya-body"><b>आज का पुण्य मिला (+' + d.reward + ')</b><small>📺 1 विज्ञापन देखकर दुगना करें</small></span>' +
+        '<span class="punya-go">2x ›</span></button>';
+    }
+    return '<button class="punya-card done" data-act="punya-open"><span class="punya-ico">🙏</span>' +
+      '<span class="punya-body"><b>आज का पुण्य पूरा</b><small>कल फिर आएँ · दिन ' + ((d.day % 7) + 1) + ' पर +' + Punya.cycle[d.day % 7] + '</small></span>' +
+      '<span class="punya-go">›</span></button>';
+  }
+
+  function showPunyaModal(justClaimed) {
+    var d = Punya.daily(), h = '<div class="modal-card punya-modal"><div class="m-ico">🎁</div><h2>दैनिक पुण्य</h2>';
+    h += '<p class="muted small">रोज़ आएँ, पुण्य अंक पाएँ — आपका भक्ति Level बढ़ेगा ✨<br>एक दिन छूट जाए तो भी चक्र जारी रहता है 🙏</p>';
+    h += '<div class="punya-cal">';
+    each(Punya.cycle, function (pts, i) {
+      var n = i + 1, cls = "pday";
+      if (n < d.day || (n === d.day && d.claimedToday)) cls += " got";
+      if (n === d.day) cls += " today";
+      if (n === 7) cls += " big";
+      h += '<div class="' + cls + '"><small>दिन ' + n + '</small><b>' + (n === 7 ? '🔱' : '🪔') + '</b><span>+' + pts + '</span></div>';
+    });
+    h += '</div>';
+    if (!d.claimedToday) {
+      h += '<button class="cta-btn" data-act="punya-claim">🙏 आज का पुण्य लें (+' + d.reward + ')</button>';
+    } else if (!d.doubledToday) {
+      if (justClaimed) h += '<div class="punya-got">+' + d.reward + ' पुण्य अंक मिले! 🎉</div>';
+      h += '<button class="cta-btn rw" data-act="punya-double">📺 1 विज्ञापन देखें → +' + d.reward + ' और (दुगना)</button>';
+    } else {
+      h += '<div class="punya-got">✓ आज का पुण्य दुगना हो गया 🙏</div>';
+    }
+    h += '<button class="pill sm" data-act="close-modal">बाद में</button></div>';
+    modal(h);
+    if (d.claimedToday && !d.doubledToday) Bridge.preloadRewarded();
+  }
+
+  // ================= ONBOARDING (first run: naam -> raashi -> reminder) =================
+  var _ob = { step: 1 };
+  function needsOnboarding() {
+    if (Store.get("onboarded", false)) return false;
+    if (Store.getName() || Store.get("namePrompted", false)) { Store.set("onboarded", true); return false; } // purane user
+    return true;
+  }
+  function showOnboarding() { _ob.step = 1; renderOnboarding(); }
+  function renderOnboarding() {
+    navEl.hidden = true; headerEl.hidden = true;
+    var s = _ob.step, h = '<div class="ob"><div class="ob-dots">';
+    for (var i = 1; i <= 4; i++) h += '<span class="' + (i === s ? "on" : (i < s ? "done" : "")) + '"></span>';
+    h += '</div>';
+    if (s === 1) {
+      h += '<div class="ob-om">ॐ</div><h1 class="ob-title">Bhakti Daily</h1>' +
+        '<p class="ob-sub">रोज़ की भक्ति — एक ही जगह 🙏</p>' +
+        '<div class="ob-feats">' +
+        '<div>🗓️ <b>आज का पंचांग</b> व शुभ मुहूर्त</div>' +
+        '<div>📿 <b>जाप माला</b> व परिवार का सामूहिक जाप</div>' +
+        '<div>🌅 <b>राशिफल</b> · 🎨 नाम-फोटो वाले <b>Status/DP</b></div>' +
+        '<div>📖 <b>चालीसा · आरती · मंत्र</b> — बिना इंटरनेट</div></div>' +
+        '<button class="cta-btn" data-act="ob-next">🙏 शुरू करें</button>';
+    } else if (s === 2) {
+      h += '<div class="ob-ico">✍️</div><h2 class="ob-h">आपका शुभ नाम?</h2>' +
+        '<p class="ob-sub">आशीर्वाद कार्ड और Status पर आपका नाम आएगा</p>' +
+        '<input class="grp-inp ob-inp" id="obName" maxlength="24" placeholder="जैसे: राधा" value="' + esc(Store.getName()) + '">' +
+        '<button class="cta-btn" data-act="ob-next">आगे ›</button><button class="ob-skip" data-act="ob-skip">छोड़ें</button>';
+    } else if (s === 3) {
+      h += '<div class="ob-ico">🌅</div><h2 class="ob-h">आपकी राशि?</h2><p class="ob-sub">रोज़ का राशिफल आपके लिए</p><div class="rf-grid ob-grid">';
+      each(Rashifal.list, function (r) { h += '<button class="rf-card" data-act="ob-rashi" data-k="' + r.key + '" style="--accent:' + r.accent + '"><span class="rf-card-sym">' + r.sym + '</span><b>' + esc(r.name) + '</b></button>'; });
+      h += '</div><button class="ob-skip" data-act="ob-skip">पता नहीं / छोड़ें</button>';
+    } else {
+      h += '<div class="ob-ico">🔔</div><h2 class="ob-h">रोज़ भक्ति का समय?</h2>' +
+        '<p class="ob-sub">उसी समय याद दिलाएँगे — भक्ति कभी न छूटे</p><div class="ob-times">' +
+        '<button class="chip" data-act="ob-time" data-t="06:00">🌄 सुबह 6:00</button>' +
+        '<button class="chip" data-act="ob-time" data-t="07:00">🌅 सुबह 7:00</button>' +
+        '<button class="chip" data-act="ob-time" data-t="08:00">☀️ सुबह 8:00</button>' +
+        '<button class="chip" data-act="ob-time" data-t="18:30">🪔 शाम 6:30</button></div>' +
+        '<button class="ob-skip" data-act="ob-skip">अभी नहीं</button>';
+    }
+    h += '</div>';
+    content.innerHTML = h; content.scrollTop = 0;
+    Analytics.track("onboarding_step", { step: s });
+  }
+  function obNext() {
+    if (_ob.step === 2) { var n = $("#obName"); if (n && n.value.trim()) Store.setName(n.value); Store.set("namePrompted", true); }
+    _ob.step++;
+    if (_ob.step > 4) { finishOnboarding(); return; }
+    renderOnboarding();
+  }
+  function obSkip() {
+    if (_ob.step === 2) Store.set("namePrompted", true);
+    _ob.step++;
+    if (_ob.step > 4) { finishOnboarding(); return; }
+    renderOnboarding();
+  }
+  function obSetReminder(t) {
+    var p = String(t).split(":"), hh = +p[0], mm = +p[1], id = hh >= 12 ? "evening" : "morning", r = loadReminders();
+    each(r, function (rem) { if (rem.id === id) { rem.enabled = true; rem.hour = hh; rem.minute = mm; } });
+    saveReminders(r);
+    if (!Bridge.hasNotificationPermission()) Bridge.requestNotificationPermission();
+    Analytics.track("reminder_enabled", { id: id, via: "onboarding" });
+    finishOnboarding();
+  }
+  function finishOnboarding() {
+    Store.set("onboarded", true); Store.set("namePrompted", true);
+    navEl.hidden = false; headerEl.hidden = false;
+    Analytics.track("onboarding_done", {});
+    viewHome();
+    var nm = Store.getName();
+    toast("🙏 स्वागत है" + (nm ? ", " + nm + " जी" : "") + "!");
+    setTimeout(function () { if (!Punya.daily().claimedToday && !document.getElementById("modalBg")) showPunyaModal(false); }, 900);
+  }
+
+  function refreshPunyaCard() {
+    var c = document.querySelector(".punya-card");
+    if (c) c.outerHTML = punyaCardHtml();
+  }
+
+  function maybeStreakRakshak() {
+    var risk = Punya.streakAtRisk();
+    if (!risk || document.getElementById("modalBg")) return;
+    Punya.markStreakOffered();
+    Bridge.preloadRewarded();
+    modal('<div class="modal-card"><div class="m-ico">🛡️</div><h2>स्ट्रीक रक्षक</h2>' +
+      '<p>कल भक्ति छूट गई — आपकी <b>🔥 ' + risk.count + ' दिन</b> की स्ट्रीक टूटने वाली है!</p>' +
+      '<p class="muted small">📺 1 विज्ञापन देखें → आपकी स्ट्रीक बच जाएगी (फिर आज की भक्ति करें)।</p>' +
+      '<div class="modal-btns"><button class="pill" data-act="close-modal">रहने दें</button>' +
+      '<button class="cta-btn rw" data-act="streak-save">📺 स्ट्रीक बचाएँ</button></div></div>');
+    Analytics.track("streak_rakshak_offer", { count: risk.count });
   }
 
   // ================= REMINDERS =================
@@ -880,8 +1109,10 @@
       '<button class="set-row link-row" data-act="city"><span>पंचांग शहर</span><span class="chev">' + esc(cityName) + ' ›</span></button></div>';
     h += '<div class="sec-label">भक्ति</div><div class="card-group">' + linkRow("🔔 रिमाइंडर", "reminders") + linkRow("🔥 स्ट्रीक", "streak") + linkRow("📿 जाप", "jaap") + '</div>';
     h += '<div class="sec-label">मोनेटाइज़ेशन</div><div class="card-group"><div class="set-row"><span>विज्ञापन हटाएँ (Premium)</span>' + (prem ? '<span class="badge on">सक्रिय</span>' : '<button class="pill sm" data-act="premium">देखें</button>') + '</div></div>';
-    h += '<div class="sec-label">प्राइवेसी</div><div class="card-group"><div class="set-row"><span>गुमनाम एनालिटिक्स</span><label class="switch"><input type="checkbox" data-act="analytics"' + (s.analytics !== false ? " checked" : "") + '><span></span></label></div></div>';
-    h += '<div class="sec-label">ऐप</div><div class="card-group"><button class="set-row link-row" data-act="share-app"><span>↗ ऐप शेयर करें</span><span class="chev">›</span></button><div class="set-row muted"><span>Bhakti Daily</span><span>v3.8</span></div></div>';
+    h += '<div class="sec-label">प्राइवेसी</div><div class="card-group"><div class="set-row"><span>गुमनाम एनालिटिक्स</span><label class="switch"><input type="checkbox" data-act="analytics"' + (s.analytics !== false ? " checked" : "") + '><span></span></label></div>' +
+      (Bridge.isPrivacyOptionsRequired() ? '<button class="set-row link-row" data-act="privacy-options"><span>🔒 विज्ञापन गोपनीयता विकल्प</span><span class="chev">›</span></button>' : '') + '</div>';
+    h += '<div class="sec-label">पुण्य</div><div class="card-group"><button class="set-row link-row" data-act="punya-open"><span>🎁 दैनिक पुण्य</span><span class="chev">' + fmtNum(Punya.bonus()) + ' अंक ›</span></button></div>';
+    h += '<div class="sec-label">ऐप</div><div class="card-group"><button class="set-row link-row" data-act="share-app"><span>↗ ऐप शेयर करें</span><span class="chev">›</span></button><div class="set-row muted"><span>Bhakti Daily</span><span>v4.0</span></div></div>';
     h += '</div>';
     content.innerHTML = h; content.scrollTop = 0;
   }
@@ -1030,20 +1261,76 @@
     // ---- Status / DP maker ----
     if (act === "status-cat") { _stCat = el.getAttribute("data-c"); viewStatus(); return; }
     if (act === "status-size") { _stSize = el.getAttribute("data-s"); viewStatus(); return; }
-    if (act === "status-open") { openStatusModal(el.getAttribute("data-id")); return; }
+    if (act === "status-open") {
+      var sid = el.getAttribute("data-id"), stp = StatusMaker.byId(sid);
+      if (stp.premium && !Punya.premiumStatusUnlocked()) { showStatusUnlock(sid); return; }
+      openStatusModal(sid); return;
+    }
+    if (act === "status-unlock") { showStatusUnlock(null); return; }
+    if (act === "status-unlock-go") {
+      watchAd("status_premium", function () {
+        Punya.unlockPremiumStatus(24); closeModal(); toast("✨ 24 घंटे के लिए Premium designs अनलॉक!");
+        var pid = _stPending; _stPending = null;
+        if (parseRoute().name === "status") viewStatus();
+        if (pid) openStatusModal(pid);
+      });
+      return;
+    }
+    if (act === "status-photo") { var fin = $("#stPhotoIn"); if (fin) fin.click(); return; }
+    if (act === "status-photo-del") { Store.set("status_photo", ""); _stPhoto = null; var sid2 = _stCur; closeModal(); openStatusModal(sid2); toast("फोटो हटाई"); return; }
     if (act === "status-msize") { _stSize = el.getAttribute("data-s"); var _id = _stCur; closeModal(); openStatusModal(_id); return; }
     if (act === "status-wa") {
-      try { var u = StatusMaker.build(_stCur, { name: Store.getName(), size: _stSize }); Bridge.shareWhatsApp(u, StatusMaker.caption(_stCur)); Analytics.track("share_clicked", { kind: "status", via: "wa" }); }
+      try { var u = StatusMaker.build(_stCur, { name: Store.getName(), size: _stSize, photo: stPhoto() }); Bridge.shareWhatsApp(u, StatusMaker.caption(_stCur)); Analytics.track("share_clicked", { kind: "status", via: "wa" }); }
       catch (e) { toast("शेयर नहीं हो पाया"); } return;
     }
     if (act === "status-share") {
-      try { var u2 = StatusMaker.build(_stCur, { name: Store.getName(), size: _stSize }); Bridge.shareImage(u2, StatusMaker.caption(_stCur)); Analytics.track("share_clicked", { kind: "status" }); }
+      try { var u2 = StatusMaker.build(_stCur, { name: Store.getName(), size: _stSize, photo: stPhoto() }); Bridge.shareImage(u2, StatusMaker.caption(_stCur)); Analytics.track("share_clicked", { kind: "status" }); }
       catch (e) { toast("शेयर नहीं हो पाया"); } return;
     }
     if (act === "status-save") {
-      try { var u3 = StatusMaker.build(_stCur, { name: Store.getName(), size: _stSize }); var okS = Bridge.saveImage(u3, "bhakti-status"); toast(okS ? "गैलरी में सेव ⬇" : "सेव नहीं हुआ"); }
+      try { var u3 = StatusMaker.build(_stCur, { name: Store.getName(), size: _stSize, photo: stPhoto() }); var okS = Bridge.saveImage(u3, "bhakti-status"); toast(okS ? "गैलरी में सेव ⬇" : "सेव नहीं हुआ"); }
       catch (e) {} return;
     }
+    // ---- दैनिक पुण्य / rewarded ----
+    if (act === "punya-open") { showPunyaModal(false); return; }
+    if (act === "punya-claim") {
+      var cl = Punya.claimDaily();
+      if (cl.ok) { Bridge.vibrate(40); closeModal(); showPunyaModal(true); refreshPunyaCard(); Analytics.track("daily_claim", { day: cl.day }); }
+      return;
+    }
+    if (act === "punya-double") {
+      watchAd("daily_2x", function () {
+        var add = Punya.doubleDaily(); closeModal();
+        if (add) { toast("🎉 +" + add + " पुण्य अंक और मिले!"); Bridge.vibrate(40); }
+        refreshPunyaCard();
+      });
+      return;
+    }
+    if (act === "streak-save") {
+      watchAd("streak_rakshak", function () {
+        var c = Punya.repairStreak(); closeModal();
+        toast("🛡️ " + c + " दिन की स्ट्रीक बच गई! आज की भक्ति करें 🙏");
+        if (parseRoute().name === "home") viewHome();
+      });
+      return;
+    }
+    if (act === "jaap-2x") {
+      var jt = parseInt(el.getAttribute("data-t"), 10) || 108;
+      watchAd("jaap_2x", function () {
+        var got = Punya.jaap2x(jt);
+        var b = $('[data-act="jaap-2x"]');
+        if (b) { b.outerHTML = '<div class="punya-got">✓ +' + got + ' पुण्य अंक जुड़े 🎉</div>'; }
+        else toast("✓ +" + got + " पुण्य अंक जुड़े");
+      });
+      return;
+    }
+    if (act === "close-celebrate") { closeModal(); Bridge.showInterstitial(); return; }   // mala poori = natural break
+    if (act === "privacy-options") { Bridge.showPrivacyOptions(); return; }
+    // ---- onboarding ----
+    if (act === "ob-next") { obNext(el); return; }
+    if (act === "ob-skip") { obSkip(); return; }
+    if (act === "ob-rashi") { Store.setRashi(el.getAttribute("data-k")); _ob.step = 4; renderOnboarding(); return; }
+    if (act === "ob-time") { obSetReminder(el.getAttribute("data-t")); return; }
     // ---- Bhakti Level ----
     if (act === "share-level") { try { ShareCard.shareLevel(Level.forUser()); Analytics.track("share_clicked", { kind: "level" }); } catch (e) { toast("शेयर नहीं हो पाया"); } return; }
   }
@@ -1070,6 +1357,12 @@
     var t = e.target; if (t && t.getAttribute && t.getAttribute("data-act") === "share-milestone") { try { ShareCard.shareMilestone(t.getAttribute("data-d")); } catch (x) {} } });
 
   // ================= boot =================
+  // Native back button: pehle modal band, onboarding me ek step peeche; warna native history.
+  window.__onBack = function () {
+    if (document.getElementById("modalBg")) { closeModal(); return true; }
+    if (content.querySelector(".ob") && _ob.step > 1) { _ob.step--; renderOnboarding(); return true; }
+    return false;
+  };
   window.__ttsDone = function () { window._ttsOn = false; var b = document.getElementById("ttsBtn"); if (b) b.textContent = "🔊"; };
 
   function boot() {

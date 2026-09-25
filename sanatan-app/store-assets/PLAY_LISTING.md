@@ -16,7 +16,9 @@ jagah, **pura offline** (bina internet ke bhi chalta hai).
 **✨ Khaas baatein:**
 • 🚩 **Hanuman Chalisa** — pura shuddh paath, badhe aur saaf akshar mein
 • 📿 **Chalisa, Aarti, Mantra** ka sangrah — Ganesh, Shiv, Durga, Lakshmi, Vishnu aur bhakti mantra
-• 🎨 **Bhakti Status / DP Maker** — naam wale sundar status (9:16) aur DP (1:1) — WhatsApp/Insta par 1-tap share (Mahadev, Krishna, Ram, Durga, Hanuman, Ganesh, Good Morning, Gita)
+• 🎨 **Bhakti Status / DP Maker** — **apni photo + naam** wale sundar status (9:16) aur DP (1:1) — 24 designs incl. shahi **gold** aur **neon glow** — WhatsApp/Insta par 1-tap share
+• 🎁 **Dainik Punya** — roz aao, punya ank pao (7 din ka chakra, din 7 = 108) — ek din chhoot jaye to bhi chakra jaari
+• 🛡️ **Streak Rakshak** — ek din bhakti chhoot gayi? apni streak bachao
 • ✨ **Bhakti Level / Aura** — jaap + streak se level up: Bhakt → Sadhak → Yogi → Rishi (gamified bhakti yatra)
 • 🌅 **Aaj ka Rashifal** — sabhi 12 rashi ka roz ka fal (prem, karya, swasthya, shubh rang/ank/disha) + rashi ka **upay** seedhe app ke paath se juda
 • 🗓️ **Aaj ka Panchang** — tithi, paksha, Vikram Samvat, sूryoday/sूryast (apne shahar ke hisaab se)
@@ -52,7 +54,8 @@ jaap counter, mala counter, choghadiya, rahu kaal, shubh muhurat,
 live darshan, group jaap, family jaap, aaj ka panchang,
 rashifal, aaj ka rashifal, daily horoscope hindi, rashi, horoscope,
 bhakti status, god status, mahadev status, dp maker, good morning god,
-status maker, insta story, whatsapp status hindu
+status maker, insta story, whatsapp status hindu,
+photo dp maker, bhagwan dp, naam wala status, daily reward, punya
 
 ## Category
 Lifestyle (or Books & Reference)
@@ -61,15 +64,16 @@ Lifestyle (or Books & Reference)
 Everyone
 
 ## Screenshots (READY — store-assets/screenshots/, framed 1080x1920)
-1. `01-home.png` — Home: panchang, muhurat, aaj ki bhakti + streak
-2. `02-jaap.png` — Digital Jaap Mala counter
-3. `03-group.png` — Parivaar/Samuh Jaap + leaderboard
-4. `04-muhurat.png` — Shubh Choghadiya / Rahu Kaal
-5. `05-festivals.png` — Vrat & Tyohar list
-6. `06-blessing.png` — WhatsApp daily aashirwad card
-7. `07-rashifal.png` — Aaj ka Rashifal (12 rashi)
-8. `08-status.png` — Bhakti Status / DP maker
-9. `09-level.png` — Bhakti Level / Aura
+Google Play: **max 8** phone screenshots — upload these 8 in this order:
+1. `01-home.png` — Home: panchang, dainik punya, muhurat
+2. `02-photo-dp.png` — Apni photo + naam wala DP (gold design)
+3. `03-rashifal.png` — Aaj ka Rashifal (12 rashi)
+4. `04-punya.png` — Dainik punya 7-din chakra
+5. `05-jaap.png` — Digital Jaap Mala
+6. `06-group.png` — Parivaar/Samuh Jaap + leaderboard
+7. `07-muhurat.png` — Shubh Choghadiya / Rahu Kaal
+8. `08-festivals.png` — Vrat & Tyohar
+(Extra, upload nahi: `screenshots/extra/`)
 
 Feature graphic (1024x500): `store-assets/feature-graphic-1024x500.png`
 Hi-res icon (512x512): `store-assets/playstore-icon-512.png`
@@ -78,7 +82,14 @@ Hi-res icon (512x512): `store-assets/playstore-icon-512.png`
 "रोज़ इसी समय भक्ति का स्मरण भेजने के लिए नोटिफिकेशन की अनुमति दें।
 आप कभी भी बंद कर सकते हैं।"
 
-## What's new (release notes v3.8)
+## What's new (release notes v4.0)
+• 🆕 📸 **अपनी फोटो + नाम** वाला भक्ति DP/Status — 10 नए शाही gold व neon designs
+• 🆕 🎁 **दैनिक पुण्य** — रोज़ आएँ, पुण्य अंक पाएँ (7 दिन का चक्र)
+• 🆕 🛡️ स्ट्रीक रक्षक · नया स्वागत (नाम, राशि, रिमाइंडर समय)
+• 🆕 शाही launch screen · Android 16 सपोर्ट · Dark mode अब फोन की सेटिंग के साथ
+• पुस्तकालय में सभी पाठ एक जगह (सब) · कई सुधार
+
+### (v3.8)
 • 🆕 ✨ नया **Ultra-Divine Premium** look — royal gold + शाही रंग, elegant नई typography, divine glow
 • हर स्क्रीन refined — Light व Dark दोनों में और सुंदर
 • छोटे सुधार

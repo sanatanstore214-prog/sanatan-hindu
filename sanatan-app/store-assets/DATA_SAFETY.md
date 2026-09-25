@@ -15,6 +15,14 @@ Use these when filling the **Data safety** section in Play Console.
 
 - The app itself does **not** collect email, phone number, contacts,
   location, photos, or files.
+- **Status/DP photo (v4.0):** if the user picks a photo for their DP/status,
+  it is resized and kept **only on the device** (localStorage) to draw the
+  card. It is never uploaded. It leaves the device only if the user
+  themselves shares the generated image. → Not "collected" in Play terms.
+- **Ads (v4.0):** Google AdMob serves banner, interstitial, rewarded and
+  app-open ads. Rewarded ads give only in-app virtual "पुण्य अंक"/designs.
+  Google UMP shows a consent form to EEA/UK/CH users (a "European
+  regulations" message must be published in AdMob → Privacy & messaging).
 - Favorites / settings / streak / reminders / your saved name are stored
   **only on the device** (not "collected" in Play terms) **unless** you opt
   in to **Group Jaap**.

@@ -3,16 +3,18 @@
 Ye **step-by-step** guide hai app ko Google Play par publish karke **kamai
 shuru** karne ke liye. Technical jaankari kam se kam rakhi hai. 🙏
 
-App abhi **ready + signed** hai (v3.8). Neeche jo ⬜ hai wo **aapko** karna hai
+App abhi **ready + signed** hai (v4.0). Neeche jo ⬜ hai wo **aapko** karna hai
 (zyada tar Google account/paisa wali cheezein — sirf aap kar sakte ho).
 
 ---
 
 ## 📦 0) Jo AB TAK ban chuka hai (ready)
-- ✅ **Signed App Bundle** (Play upload ke liye): `app-release.aab` (v3.8, code 11)
+- ✅ **Google Play 2026 shart poori:** targetSdk **36** (Android 16), edge-to-edge + predictive back
+- ✅ **AdMob SDK 25.x** (2028 tak supported) + UMP consent
+- ✅ **Signed App Bundle** (Play upload ke liye): `app-release.aab` (v4.0, code 12)
 - ✅ **Signed APK** (khud phone me test ke liye): `app-release.apk`
 - ✅ **Upload keystore**: `keystore/bhakti-upload.keystore` — *isko sambhaal kar rakho (neeche step 1)*
-- ✅ **Feature graphic** (1024x500) + **9 framed screenshots** — `store-assets/`
+- ✅ **Feature graphic** (1024x500) + **8 framed screenshots** (Play limit) — `store-assets/`
 - ✅ **App icon** 512x512 — `store-assets/playstore-icon-512.png`
 - ✅ **Store listing text** (title, description, keywords) — `store-assets/PLAY_LISTING.md`
 - ✅ **Data Safety** answers — `store-assets/DATA_SAFETY.md`
@@ -50,9 +52,12 @@ Abhi app me **Google ke TEST ad IDs** lage hain (safe — inse kamai nahi hoti,
 aur inhe click karna bhi safe hai). Asli kamai ke liye:
 - ⬜ **https://admob.google.com** par account banao (free). Bank/UPI + PAN chahiye (payout ke liye).
 - ⬜ App add karo → **App ID** milega (`ca-app-pub-XXXX~YYYY`).
-- ⬜ Ad units banao (Banner + Interstitial) → har ek ka **Ad Unit ID** (`ca-app-pub-XXXX/ZZZZ`).
+- ⬜ **4 ad units** banao: Banner (Adaptive), Interstitial, **Rewarded** (reward `पुण्य अंक`, 1), **App open** → har ek ka **Ad Unit ID** (`ca-app-pub-XXXX/ZZZZ`).
 - ⬜ **App ID** daalo: `app/build.gradle` me `admobAppId` wali line.
-- ⬜ **Ad Unit IDs** daalo: `app/src/main/java/.../AdConfig.java`.
+- ⬜ **Ad Unit IDs** daalo: `app/src/main/java/.../AdConfig.java` (charon).
+- ⬜ AdMob → **Privacy & messaging** → "European regulations" message **Publish** karo (UMP consent).
+- ⬜ **app-ads.txt** apni website ke root par (`store-assets/app-ads.txt` template) — Play Console me wahi website.
+- 📘 Poori jaankari + kamai ka hisaab: **`EARNING_GUIDE.md`**
 - ⬜ App dobara build karo (neeche step 8 jaisa `bundleRelease`).
 
 > ⚠️ **Apne hi ads par khud click MAT karo** aur testing me apni real ID +
@@ -73,7 +78,7 @@ aur inhe click karna bhi safe hai). Asli kamai ke liye:
 - ⬜ **Store listing** bharo (text `store-assets/PLAY_LISTING.md` se):
   - ⬜ App name, Short description, Full description
   - ⬜ App icon (512x512), Feature graphic (1024x500)
-  - ⬜ Phone screenshots (`store-assets/screenshots/` ki 9 files upload karo)
+  - ⬜ Phone screenshots (`store-assets/screenshots/` ki 8 files upload karo (`extra/` nahi))
   - ⬜ Category: **Lifestyle** (ya Books & Reference), Email + Privacy Policy URL
 
 ---
@@ -93,7 +98,7 @@ aur inhe click karna bhi safe hai). Asli kamai ke liye:
 - ⬜ Console → **Production** (pehli baar **Closed testing** recommend hai) → **Create release**.
 - ⬜ **Play App Signing** ko **on** rehne do (default).
 - ⬜ `app-release.aab` upload karo.
-- ⬜ Release notes daalo (`PLAY_LISTING.md` ka "What's new v3.8").
+- ⬜ Release notes daalo (`PLAY_LISTING.md` ka "What's new v4.0").
 - ⬜ **Review** → **Rollout**. Pehli review me **2-7 din** lag sakte hain.
 
 ---
@@ -115,8 +120,8 @@ Output:
 - AAB → `app/build/outputs/bundle/release/app-release.aab`
 - APK → `app/build/outputs/apk/release/app-release.apk`
 
-> Har nayi release me `app/build.gradle` me **versionCode +1** (abhi 11 → 12) aur
-> `versionName` badlo (abhi "3.8").
+> Har nayi release me `app/build.gradle` me **versionCode +1** (abhi 12 → 13) aur
+> `versionName` badlo (abhi "4.0").
 
 ---
 

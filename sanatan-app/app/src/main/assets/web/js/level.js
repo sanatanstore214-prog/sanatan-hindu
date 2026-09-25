@@ -26,6 +26,7 @@
       pts += (s.count || 0) * 5;                  // current streak = 5
       pts += (Store.getFavs().length || 0) * 5;
       pts += (Store.getRecents().length || 0) * 2;
+      pts += (Store.get("punya_bonus", 0) | 0);   // दैनिक पुण्य + rewarded bonus
     } catch (e) {}
     return Math.round(pts);
   }

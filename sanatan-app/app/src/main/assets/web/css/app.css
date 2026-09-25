@@ -55,6 +55,8 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* `hidden` must always win over component display rules (#bottomNav/#appHeader/#miniPlayer set display) */
+[hidden] { display: none !important; }
 html, body { margin: 0; padding: 0; height: 100%; }
 body {
   background: var(--bg); color: var(--text);
@@ -601,3 +603,74 @@ body {
 
 /* respect reduced motion */
 @media (prefers-reduced-motion: reduce) { .cta-btn::after { animation: none; display: none; } }
+
+/* ============================================================
+   ✦ v4.0 — Punya (daily reward), rewarded CTAs, premium status, onboarding
+   ============================================================ */
+/* daily punya card on home */
+.punya-card { width: 100%; text-align: left; display: flex; align-items: center; gap: 12px; margin-top: 12px;
+  background: var(--surface); border: var(--card-line); border-radius: var(--radius); padding: 13px 15px; box-shadow: var(--shadow-sm); }
+.punya-card.ready { background: linear-gradient(120deg, #FFF3D6, #FFE2B8); border: 1.5px solid rgba(201,152,46,.55);
+  box-shadow: 0 8px 26px rgba(201,152,46,.28); animation: punyaPulse 2.4s ease-in-out infinite; }
+:root[data-theme="dark"] .punya-card.ready { background: linear-gradient(120deg, #3A2A12, #2A1E10); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .punya-card.ready { background: linear-gradient(120deg, #3A2A12, #2A1E10); } }
+.punya-card.done { opacity: .85; }
+.punya-ico { font-size: 30px; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px;
+  background: var(--gold-grad); color: #fff; flex-shrink: 0; box-shadow: 0 4px 12px rgba(169,121,28,.35); }
+.punya-card.done .punya-ico { background: var(--surface-2); box-shadow: none; }
+.punya-body { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.punya-body b { font-size: 15.5px; } .punya-body small { color: var(--muted); font-size: 12.5px; }
+.punya-go { font-weight: 800; color: var(--saffron); font-size: 14px; white-space: nowrap; }
+@keyframes punyaPulse { 0%,100% { box-shadow: 0 8px 26px rgba(201,152,46,.22); } 50% { box-shadow: 0 8px 34px rgba(232,89,12,.38); } }
+
+/* 7-day calendar */
+.punya-cal { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0 6px; }
+.pday { background: var(--surface-2); border: var(--card-line); border-radius: 12px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: .7; }
+.pday small { font-size: 10.5px; color: var(--muted); font-weight: 700; }
+.pday b { font-size: 20px; } .pday span { font-size: 12px; font-weight: 800; color: var(--gold-deep); }
+.pday.got { opacity: 1; background: rgba(46,158,79,.12); border-color: rgba(46,158,79,.4); }
+.pday.got span::after { content: " ✓"; color: #2e9e4f; }
+.pday.today { opacity: 1; border: 2px solid var(--saffron); box-shadow: 0 4px 14px rgba(232,89,12,.25); }
+.pday.big { grid-column: span 2; background: linear-gradient(120deg, #FFF3D6, #F6DA86); }
+.pday.big b { font-size: 24px; }
+.punya-got { background: rgba(46,158,79,.12); color: #1e7d3c; border-radius: 12px; padding: 10px; font-weight: 800; margin-top: 12px; text-align: center; }
+
+/* rewarded CTA — clearly marked "watch ad" (policy: reward stated before the ad) */
+.cta-btn.rw { background: linear-gradient(120deg, #7B1FA2, #C2185B); box-shadow: 0 10px 26px rgba(123,31,162,.32), 0 0 0 1px rgba(243,214,126,.35); }
+
+/* premium status */
+.prem-strip { width: 100%; margin-top: 12px; border-radius: 14px; padding: 12px 14px; font-weight: 800; font-size: 13.5px; text-align: center;
+  color: #FFF6CF; background: linear-gradient(120deg, #1C1A2E, #3E1006); border: 1px solid rgba(243,214,126,.55); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+.prem-strip.on { color: #1e7d3c; background: rgba(46,158,79,.12); border-color: rgba(46,158,79,.4); box-shadow: none; }
+.status-thumb { position: relative; }
+.status-thumb.prem { border: 2px solid #D3A73E; }
+.status-thumb.locked img { filter: saturate(.85) brightness(.85); }
+.st-badge { position: absolute; left: 6px; bottom: 6px; background: rgba(0,0,0,.62); color: #F6DA86; font-size: 10.5px; font-weight: 800;
+  border-radius: 10px; padding: 3px 7px; border: 1px solid rgba(243,214,126,.5); }
+.status-sizes { flex-wrap: wrap; }
+
+/* onboarding */
+.ob { min-height: 100%; padding: 28px 22px 40px; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; text-align: center; animation: fade .3s ease; }
+.ob-dots { display: flex; gap: 7px; margin-bottom: 18px; }
+.ob-dots span { width: 8px; height: 8px; border-radius: 8px; background: var(--border); transition: all .25s; }
+.ob-dots span.done { background: var(--gold); }
+.ob-dots span.on { width: 26px; background: var(--saffron); }
+.ob-om { font-size: 96px; line-height: 1; margin-top: 10px; color: var(--gold-deep); text-shadow: 0 0 34px rgba(243,214,126,.9), 0 0 70px rgba(232,89,12,.35); animation: omGlow 3s ease-in-out infinite; }
+@keyframes omGlow { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.ob-title { font-family: var(--display); font-weight: 400; font-size: 40px; margin: 10px 0 2px; color: var(--maroon); }
+:root[data-theme="dark"] .ob-title { color: var(--gold-2); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ob-title { color: var(--gold-2); } }
+.ob-sub { color: var(--muted); font-size: 15px; margin: 6px 0 16px; }
+.ob-feats { width: 100%; display: flex; flex-direction: column; gap: 9px; margin: 6px 0 10px; text-align: left; }
+.ob-feats div { background: var(--surface); border: var(--card-line); border-radius: 14px; padding: 12px 14px; font-size: 14.5px; box-shadow: var(--shadow-sm); }
+.ob-ico { font-size: 56px; margin-top: 24px; }
+.ob-h { font-family: var(--display); font-weight: 400; font-size: 28px; margin: 8px 0 2px; }
+.ob-inp { margin-top: 6px; text-align: center; font-size: 18px; }
+.ob-grid { width: 100%; }
+.ob-times { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 8px 0 14px; }
+.ob-times .chip { font-size: 15px; padding: 12px 16px; }
+.ob-skip { margin-top: 12px; color: var(--muted); font-weight: 700; font-size: 14px; padding: 10px; }
+.soon-note { margin-top: 6px; padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--gold); color: var(--muted); font-size: 13px; text-align: center; background: var(--surface-2); }
+.ob-times .chip { background: var(--surface); border: var(--card-line); color: var(--text); box-shadow: var(--shadow-sm); min-width: 42%; }
+.ob-times .chip:active { transform: scale(.97); background: var(--surface-2); }
+.modal-card > .pill.sm { margin-top: 12px; }

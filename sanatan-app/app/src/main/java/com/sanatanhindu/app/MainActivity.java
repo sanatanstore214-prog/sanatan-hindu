@@ -62,6 +62,32 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.os.SystemClock;
+import android.util.DisplayMetrics;
+import android.webkit.ValueCallback;
+
+import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
+import android.view.ViewGroup;
+
+import com.google.android.gms.ads.AdError;
+import com.google.android.gms.ads.appopen.AppOpenAd;
+import com.google.android.gms.ads.rewarded.RewardedAd;
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import com.google.android.ump.ConsentInformation;
+import com.google.android.ump.ConsentRequestParameters;
+import com.google.android.ump.UserMessagingPlatform;
 
 /**
  * Bhakti Daily — WebView host + AdMob + native bridge (reminders, share,
@@ -78,7 +104,26 @@ public class MainActivity extends AppCompatActivity {
     private AdView bannerAd;
     private InterstitialAd interstitialAd;
     private int navCount = 0;
-    private boolean adsEnabled = true;
+    private volatile boolean adsEnabled = true;
+
+    // ---- earning engine state ----
+    private volatile RewardedAd rewardedAd;
+    private AppOpenAd appOpenAd;
+    private long appOpenLoadedAt = 0;          // wall clock
+    private long lastFullscreenAt = 0;         // elapsedRealtime
+    private long sessionStartAt = 0;           // elapsedRealtime
+    private long backgroundedAt = 0;           // elapsedRealtime
+    private long lastExternalAt = 0;           // elapsedRealtime
+    private volatile boolean showingFullscreen = false;
+    private boolean loadingRewarded = false, loadingAppOpen = false;
+    private int launchCount = 0;
+    private SharedPreferences adPrefs;
+    private ConsentInformation consentInformation;
+    private final AtomicBoolean adsInitStarted = new AtomicBoolean(false);
+
+    // ---- photo picker (DP maker) ----
+    private ValueCallback<Uri[]> fileCallback;
+    private ActivityResultLauncher<String> pickImage;
     private String pendingRoute = null;
     private TextToSpeech tts;
     private boolean ttsReady = false;
@@ -86,21 +131,117 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this);   // Android 15/16 enforce edge-to-edge; we pad with insets
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setupEdgeToEdge();
+        setupBackHandling();
+
+        // Photo picker for DP maker (<input type=file> in WebView)
+        pickImage = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (fileCallback != null) {
+                fileCallback.onReceiveValue(uri != null ? new Uri[]{ uri } : null);
+                fileCallback = null;
+            }
+        });
 
         pendingRoute = getIntent() != null ? getIntent().getStringExtra("route") : null;
 
         adContainer = findViewById(R.id.ad_container);
         webView = findViewById(R.id.webview);
+        applyNightAwareColors();
+
+        adPrefs = getSharedPreferences("bhakti_ads", MODE_PRIVATE);
+        if (savedInstanceState == null) {
+            launchCount = adPrefs.getInt("launch_count", 0) + 1;
+            adPrefs.edit().putInt("launch_count", launchCount).apply();
+        } else {
+            launchCount = adPrefs.getInt("launch_count", 1);
+        }
+        sessionStartAt = SystemClock.elapsedRealtime();
 
         ReminderScheduler.createChannel(this);
         setupWebView();
         webView.loadUrl("https://appassets.androidx.org/assets/web/index.html");
+        webView.postDelayed(this::revealContent, 4000);   // safety: splash kabhi atke nahi
 
-        initAdsSafely();
+        gatherConsentThenInitAds();
         initTts();
         setupAudioListener();
+    }
+
+    private boolean isNight() {
+        return (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                == Configuration.UI_MODE_NIGHT_YES;
+    }
+    private int stripColor() { return Color.parseColor(isNight() ? "#1E1711" : "#FFFDF8"); }
+    /** WebView/ad-strip ka rang theme ke hisaab se (launch par white/cream flash na ho). */
+    private void applyNightAwareColors() {
+        int bg = Color.parseColor(isNight() ? "#120C08" : "#FBF3E4");
+        if (webView != null) webView.setBackgroundColor(bg);
+        if (adContainer != null) adContainer.setBackgroundColor(stripColor());
+    }
+
+    // ---------------- Edge-to-edge (Android 15/16) ----------------
+    private void setupEdgeToEdge() {
+        final View root = findViewById(R.id.root);
+        final View scrim = findViewById(R.id.status_scrim);
+        if (root == null) return;
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            if (scrim != null) {
+                ViewGroup.LayoutParams lp = scrim.getLayoutParams();
+                if (lp.height != bars.top) { lp.height = bars.top; scrim.setLayoutParams(lp); }
+            }
+            v.setPadding(bars.left, 0, bars.right, Math.max(bars.bottom, ime.bottom));
+            // Keyboard khula ho to banner chhupao (text input ke paas ad = galti se click ka risk)
+            boolean imeOpen = insets.isVisible(WindowInsetsCompat.Type.ime());
+            if (adContainer != null && revealed) adContainer.setVisibility(adsEnabled && !imeOpen ? View.VISIBLE : View.GONE);
+            return WindowInsetsCompat.CONSUMED;
+        });
+        WindowInsetsControllerCompat c = WindowCompat.getInsetsController(getWindow(), root);
+        c.setAppearanceLightStatusBars(false);          // white icons on royal maroon
+        c.setAppearanceLightNavigationBars(!isNight()); // dark icons on light strip
+    }
+
+    /** Splash (royal) -> web UI: tab dikhao jab page paint ho chuka ho. */
+    private boolean revealed = false;
+    private void revealContent() {
+        if (revealed) return;
+        revealed = true;
+        runOnUiThread(() -> {
+            View root = findViewById(R.id.root);
+            if (root != null) root.setBackgroundColor(stripColor());
+            if (webView != null) { webView.setAlpha(0f); webView.setVisibility(View.VISIBLE); webView.animate().alpha(1f).setDuration(220).start(); }
+            if (adContainer != null) adContainer.setVisibility(adsEnabled ? View.VISIBLE : View.GONE);
+        });
+    }
+
+    // ---------------- Back (predictive back, Android 16) ----------------
+    // Pehle web modal band karo, phir web history, phir app band.
+    private void setupBackHandling() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override public void handleOnBackPressed() {
+                if (webView == null) { finish(); return; }
+                webView.evaluateJavascript("(window.__onBack&&window.__onBack())?'1':'0'", value -> {
+                    if (value != null && value.contains("1")) return;          // modal closed in JS
+                    if (webView.canGoBack()) webView.goBack();
+                    else finish();
+                });
+            }
+        });
+    }
+
+    // Kisi bhi bahari app (WhatsApp/share/browser/Play) par jaane ka samay yaad rakho
+    // taaki lautne par turant app-open ad na dikhe.
+    @Override public void startActivity(Intent intent) {
+        lastExternalAt = SystemClock.elapsedRealtime();
+        super.startActivity(intent);
+    }
+    @Override public void startActivity(Intent intent, Bundle options) {
+        lastExternalAt = SystemClock.elapsedRealtime();
+        super.startActivity(intent, options);
     }
 
     private void setupAudioListener() {
@@ -169,18 +310,39 @@ public class MainActivity extends AppCompatActivity {
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .build();
 
-        webView.setBackgroundColor(Color.parseColor("#FBF6EE"));
+        applyNightAwareColors();
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
 
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
-        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebChromeClient(new WebChromeClient() {
+            // <input type="file" accept="image/*"> -> system photo picker (DP maker)
+            @Override
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
+                if (fileCallback != null) fileCallback.onReceiveValue(null);
+                fileCallback = callback;
+                try {
+                    lastExternalAt = SystemClock.elapsedRealtime();
+                    pickImage.launch("image/*");
+                    return true;
+                } catch (Throwable t) {
+                    Log.w(TAG, "file chooser: " + t.getMessage());
+                    fileCallback = null;
+                    return false;
+                }
+            }
+        });
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return assetLoader.shouldInterceptRequest(request.getUrl());
+            }
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                // ek frame baad dikhao taaki pehla paint ho chuka ho (no blank flash)
+                view.postDelayed(MainActivity.this::revealContent, 60);
             }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -200,57 +362,237 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // ---------------- Ads ----------------
-    private void initAdsSafely() {
+    // ---------------- Consent (UMP) -> Ads ----------------
+    /** Google UMP: EEA/UK users ko consent form; India me aam taur par form nahi dikhta. */
+    private void gatherConsentThenInitAds() {
         try {
-            MobileAds.initialize(this, s -> {});
-            loadBanner();
-            loadInterstitial();
-        } catch (Throwable t) { Log.w(TAG, "ads init skipped: " + t.getMessage()); }
+            consentInformation = UserMessagingPlatform.getConsentInformation(this);
+            ConsentRequestParameters params = new ConsentRequestParameters.Builder().build();
+            consentInformation.requestConsentInfoUpdate(this, params,
+                    () -> UserMessagingPlatform.loadAndShowConsentFormIfRequired(this, formError -> {
+                        if (formError != null) Log.w(TAG, "consent form: " + formError.getMessage());
+                        if (consentInformation.canRequestAds()) initAdsSafely();
+                    }),
+                    requestError -> {
+                        Log.w(TAG, "consent update: " + requestError.getMessage());
+                        if (consentInformation.canRequestAds()) initAdsSafely();
+                    });
+            // Pichhle session me consent mil chuka ho to turant shuru
+            if (consentInformation.canRequestAds()) initAdsSafely();
+        } catch (Throwable t) {
+            Log.w(TAG, "ump skipped: " + t.getMessage());
+            initAdsSafely();
+        }
+    }
+
+    private void initAdsSafely() {
+        if (!adsInitStarted.compareAndSet(false, true)) return;
+        // Google guidance: initialize off the main thread (ANR se bachao)
+        new Thread(() -> {
+            try {
+                MobileAds.initialize(this, st -> runOnUiThread(() -> {
+                    loadBanner();
+                    loadInterstitial();
+                    loadRewarded();
+                    loadAppOpen();
+                }));
+            } catch (Throwable t) { Log.w(TAG, "ads init skipped: " + t.getMessage()); }
+        }).start();
+    }
+    private boolean canServe() { return adsInitStarted.get(); }
+
+    private void logAdEvent(String kind, String ev) {
+        if (webView == null) return;
+        final String js = "window.Analytics&&Analytics.track('ad_" + ev + "',{kind:'" + kind + "'})";
+        runOnUiThread(() -> { try { webView.evaluateJavascript(js, null); } catch (Throwable ignored) {} });
+    }
+
+    /** Full-screen ads (interstitial / app-open) ka common state + reload. */
+    private FullScreenContentCallback fullscreenCallback(final String kind, final Runnable reload) {
+        return new FullScreenContentCallback() {
+            @Override public void onAdShowedFullScreenContent() {
+                showingFullscreen = true;
+                lastFullscreenAt = SystemClock.elapsedRealtime();
+                logAdEvent(kind, "show");
+            }
+            @Override public void onAdDismissedFullScreenContent() {
+                showingFullscreen = false;
+                lastFullscreenAt = SystemClock.elapsedRealtime();
+                if (reload != null) reload.run();
+            }
+            @Override public void onAdFailedToShowFullScreenContent(@NonNull AdError e) {
+                showingFullscreen = false;
+                if (reload != null) reload.run();
+            }
+        };
+    }
+
+    // ---- Banner: adaptive anchored (fixed 320x50 se zyada fill + eCPM) ----
+    private AdSize adaptiveBannerSize() {
+        DisplayMetrics m = getResources().getDisplayMetrics();
+        int w = (adContainer != null && adContainer.getWidth() > 0) ? adContainer.getWidth() : m.widthPixels;
+        return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, (int) (w / m.density));
     }
     private void loadBanner() {
         try {
-            if (!adsEnabled) return;
+            if (!adsEnabled || !canServe() || adContainer == null) return;
+            if (bannerAd != null) { bannerAd.destroy(); bannerAd = null; }
             bannerAd = new AdView(this);
             bannerAd.setAdUnitId(AdConfig.BANNER_AD_UNIT_ID);
-            bannerAd.setAdSize(AdSize.BANNER);
+            bannerAd.setAdSize(adaptiveBannerSize());
             adContainer.removeAllViews();
             adContainer.addView(bannerAd);
             bannerAd.loadAd(new AdRequest.Builder().build());
         } catch (Throwable t) { Log.w(TAG, "banner skipped: " + t.getMessage()); }
     }
+
+    // ---- Interstitial: sirf natural break par (paath khatam, mala poori), pace ke saath ----
     private void loadInterstitial() {
         try {
+            if (!canServe()) return;
             InterstitialAd.load(this, AdConfig.INTERSTITIAL_AD_UNIT_ID, new AdRequest.Builder().build(),
                     new InterstitialAdLoadCallback() {
-                        @Override public void onAdLoaded(@NonNull InterstitialAd ad) {
-                            interstitialAd = ad;
-                            interstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-                                @Override public void onAdDismissedFullScreenContent() { interstitialAd = null; loadInterstitial(); }
-                            });
-                        }
+                        @Override public void onAdLoaded(@NonNull InterstitialAd ad) { interstitialAd = ad; }
                         @Override public void onAdFailedToLoad(@NonNull LoadAdError e) { interstitialAd = null; }
                     });
         } catch (Throwable t) { Log.w(TAG, "interstitial skipped: " + t.getMessage()); }
     }
-    private void maybeShowInterstitial() {
+    /** force=true: break-count ki shart chhodo; time-gap aur session-grace hamesha lagu. */
+    private void maybeShowInterstitial(boolean force) {
         try {
-            if (!adsEnabled) return;
+            if (!adsEnabled || showingFullscreen || !canServe()) return;
             navCount++;
-            if (navCount % AdConfig.INTERSTITIAL_EVERY == 0 && interstitialAd != null) interstitialAd.show(this);
-        } catch (Throwable ignored) {}
+            long now = SystemClock.elapsedRealtime();
+            if (now - sessionStartAt < AdConfig.INTERSTITIAL_SESSION_GRACE_MS) return;
+            if (lastFullscreenAt > 0 && now - lastFullscreenAt < AdConfig.INTERSTITIAL_MIN_GAP_MS) return;
+            if (!force && navCount < AdConfig.INTERSTITIAL_EVERY) return;
+            final InterstitialAd ad = interstitialAd;
+            if (ad == null) { loadInterstitial(); return; }
+            navCount = 0;
+            interstitialAd = null;
+            ad.setFullScreenContentCallback(fullscreenCallback("inter", this::loadInterstitial));
+            showingFullscreen = true;
+            ad.show(this);
+        } catch (Throwable t) { showingFullscreen = false; Log.w(TAG, "inter show: " + t.getMessage()); }
+    }
+
+    // ---- Rewarded: sirf user ke tap par; inaam app ke andar (virtual, kabhi paisa nahi) ----
+    private void loadRewarded() {
+        try {
+            if (!canServe() || loadingRewarded || rewardedAd != null) return;
+            loadingRewarded = true;
+            RewardedAd.load(this, AdConfig.REWARDED_AD_UNIT_ID, new AdRequest.Builder().build(),
+                    new RewardedAdLoadCallback() {
+                        @Override public void onAdLoaded(@NonNull RewardedAd ad) { rewardedAd = ad; loadingRewarded = false; }
+                        @Override public void onAdFailedToLoad(@NonNull LoadAdError e) { rewardedAd = null; loadingRewarded = false; }
+                    });
+        } catch (Throwable t) { loadingRewarded = false; Log.w(TAG, "rewarded load: " + t.getMessage()); }
+    }
+    private void showRewardedNow(final String tag) {
+        final RewardedAd ad = rewardedAd;
+        if (ad == null || showingFullscreen) { sendReward(tag, false, "not_ready"); loadRewarded(); return; }
+        rewardedAd = null;
+        final boolean[] earned = { false };
+        final boolean[] reported = { false };
+        ad.setFullScreenContentCallback(new FullScreenContentCallback() {
+            @Override public void onAdShowedFullScreenContent() {
+                showingFullscreen = true;
+                lastFullscreenAt = SystemClock.elapsedRealtime();
+                logAdEvent("rewarded", "show");
+            }
+            @Override public void onAdDismissedFullScreenContent() {
+                showingFullscreen = false;
+                lastFullscreenAt = SystemClock.elapsedRealtime();
+                if (!reported[0]) { reported[0] = true; sendReward(tag, earned[0], earned[0] ? "ok" : "closed"); }
+                loadRewarded();
+            }
+            @Override public void onAdFailedToShowFullScreenContent(@NonNull AdError e) {
+                showingFullscreen = false;
+                if (!reported[0]) { reported[0] = true; sendReward(tag, false, "fail"); }
+                loadRewarded();
+            }
+        });
+        try {
+            showingFullscreen = true;
+            ad.show(this, rewardItem -> earned[0] = true);
+        } catch (Throwable t) {
+            showingFullscreen = false;
+            if (!reported[0]) { reported[0] = true; sendReward(tag, false, "fail"); }
+        }
+    }
+    private void sendReward(String tag, boolean ok, String reason) {
+        if (webView == null) return;
+        final String js = "window.__reward&&window.__reward(" + JSONObject.quote(tag) + "," + ok + "," + JSONObject.quote(reason) + ")";
+        runOnUiThread(() -> { try { webView.evaluateJavascript(js, null); } catch (Throwable ignored) {} });
+    }
+
+    // ---- App open: sirf app me LAUTNE par (cold start par nahi), pace + 4h expiry ----
+    private boolean isAppOpenFresh() {
+        return appOpenAd != null && System.currentTimeMillis() - appOpenLoadedAt < AdConfig.APP_OPEN_EXPIRY_MS;
+    }
+    private void loadAppOpen() {
+        try {
+            if (!canServe() || loadingAppOpen || isAppOpenFresh()) return;
+            loadingAppOpen = true;
+            AppOpenAd.load(this, AdConfig.APP_OPEN_AD_UNIT_ID, new AdRequest.Builder().build(),
+                    new AppOpenAd.AppOpenAdLoadCallback() {
+                        @Override public void onAdLoaded(@NonNull AppOpenAd ad) {
+                            appOpenAd = ad; appOpenLoadedAt = System.currentTimeMillis(); loadingAppOpen = false;
+                        }
+                        @Override public void onAdFailedToLoad(@NonNull LoadAdError e) { appOpenAd = null; loadingAppOpen = false; }
+                    });
+        } catch (Throwable t) { loadingAppOpen = false; Log.w(TAG, "appopen load: " + t.getMessage()); }
+    }
+    private void maybeShowAppOpen() {
+        try {
+            if (!adsEnabled || showingFullscreen || !canServe()) return;
+            if (launchCount <= AdConfig.APP_OPEN_SKIP_FIRST_LAUNCHES) return;
+            long now = SystemClock.elapsedRealtime();
+            if (lastExternalAt > 0 && now - lastExternalAt < AdConfig.APP_OPEN_AFTER_EXTERNAL_MS) return;
+            // Policy: kabhi doosre full-screen ad ke turant baad nahi
+            if (lastFullscreenAt > 0 && now - lastFullscreenAt < AdConfig.INTERSTITIAL_MIN_GAP_MS) return;
+            if (System.currentTimeMillis() - adPrefs.getLong("appopen_last", 0) < AdConfig.APP_OPEN_MIN_GAP_MS) return;
+            if (!isAppOpenFresh()) { appOpenAd = null; loadAppOpen(); return; }
+            final AppOpenAd ad = appOpenAd;
+            appOpenAd = null;
+            ad.setFullScreenContentCallback(fullscreenCallback("appopen", this::loadAppOpen));
+            adPrefs.edit().putLong("appopen_last", System.currentTimeMillis()).apply();
+            showingFullscreen = true;
+            ad.show(this);
+        } catch (Throwable t) { showingFullscreen = false; Log.w(TAG, "appopen show: " + t.getMessage()); }
     }
 
     // ---------------- JS bridge ----------------
     private class AndroidBridge {
-        @JavascriptInterface public void onNavigate() { runOnUiThread(MainActivity.this::maybeShowInterstitial); }
-        @JavascriptInterface public void showInterstitial() {
-            runOnUiThread(() -> { try { if (adsEnabled && interstitialAd != null) interstitialAd.show(MainActivity.this); } catch (Throwable ignored) {} });
+        /** Natural break (tab/screen badla) — har 3rd break par, time-gap ke saath. */
+        @JavascriptInterface public void onNavigate() { runOnUiThread(() -> maybeShowInterstitial(false)); }
+        /** Bada natural break (paath poora padha / mala poori) — count shart nahi, gap lagu. */
+        @JavascriptInterface public void showInterstitial() { runOnUiThread(() -> maybeShowInterstitial(true)); }
+
+        // ---- Rewarded (user-initiated) ----
+        @JavascriptInterface public boolean isRewardedReady() { return rewardedAd != null; }
+        @JavascriptInterface public void preloadRewarded() { runOnUiThread(MainActivity.this::loadRewarded); }
+        @JavascriptInterface public void showRewarded(final String tag) {
+            runOnUiThread(() -> showRewardedNow(tag == null ? "" : tag));
+        }
+
+        // ---- Privacy (UMP) — EEA/UK users ke liye settings me entry ----
+        @JavascriptInterface public boolean isPrivacyOptionsRequired() {
+            try {
+                return consentInformation != null && consentInformation.getPrivacyOptionsRequirementStatus()
+                        == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED;
+            } catch (Throwable t) { return false; }
+        }
+        @JavascriptInterface public void showPrivacyOptions() {
+            runOnUiThread(() -> {
+                try { UserMessagingPlatform.showPrivacyOptionsForm(MainActivity.this, e -> {}); }
+                catch (Throwable ignored) {}
+            });
         }
         @JavascriptInterface public void setAdsEnabled(final boolean on) {
             runOnUiThread(() -> {
                 adsEnabled = on;
-                if (adContainer != null) adContainer.setVisibility(on ? View.VISIBLE : View.GONE);
+                if (adContainer != null && revealed) adContainer.setVisibility(on ? View.VISIBLE : View.GONE);
                 if (on && bannerAd == null) loadBanner();
             });
         }
@@ -455,13 +797,26 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
-    }
     @Override protected void onPause() { if (bannerAd != null) bannerAd.pause(); super.onPause(); }
     @Override protected void onResume() { super.onResume(); if (bannerAd != null) bannerAd.resume(); }
+
+    // App-open ad: user ghar/doosre app se ≥30s baad lauta ho tab (caps AdConfig me)
+    @Override protected void onStart() {
+        super.onStart();
+        if (backgroundedAt > 0) {
+            long away = SystemClock.elapsedRealtime() - backgroundedAt;
+            backgroundedAt = 0;
+            if (away >= AdConfig.APP_OPEN_MIN_BACKGROUND_MS) maybeShowAppOpen();
+        }
+    }
+    @Override protected void onStop() {
+        // Hamare hi full-screen ad ke kaaran stop hua ho to use 'background jaana' mat maano
+        if (!showingFullscreen) backgroundedAt = SystemClock.elapsedRealtime();
+        super.onStop();
+    }
+
     @Override protected void onDestroy() {
+        if (fileCallback != null) { try { fileCallback.onReceiveValue(null); } catch (Throwable ignored) {} fileCallback = null; }
         if (bannerAd != null) bannerAd.destroy();
         try { if (tts != null) { tts.stop(); tts.shutdown(); } } catch (Throwable ignored) {}
         AudioService.listener = null;

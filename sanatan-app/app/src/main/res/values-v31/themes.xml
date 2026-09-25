@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- DayNight: WebView ka prefers-color-scheme phone ke dark mode ko follow kare
-         (targetSdk 33+ par Light theme hamesha "light" report karta tha). -->
+    <!-- Android 12+ system splash: royal maroon + app icon (matches splash_bg). -->
     <style name="Theme.SanatanHindu" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="colorPrimary">@color/saffron</item>
         <item name="colorPrimaryDark">@color/royal_maroon</item>
         <item name="colorAccent">@color/maroon</item>
-        <!-- Launch screen (edge-to-edge; bars are drawn over this) -->
         <item name="android:windowBackground">@drawable/splash_bg</item>
+        <item name="android:windowSplashScreenBackground">@color/royal_maroon</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/royal_maroon</item>
     </style>
 </resources>
