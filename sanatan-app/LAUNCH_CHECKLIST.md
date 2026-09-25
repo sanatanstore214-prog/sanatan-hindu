@@ -57,6 +57,7 @@ aur inhe click karna bhi safe hai). Asli kamai ke liye:
 - ⬜ **Ad Unit IDs** daalo: `app/src/main/java/.../AdConfig.java` (charon).
 - ⬜ AdMob → **Privacy & messaging** → "European regulations" message **Publish** karo (UMP consent).
 - ⬜ **app-ads.txt** apni website ke root par (`store-assets/app-ads.txt` template) — Play Console me wahi website.
+- 🟢 Click-by-click AdMob steps: **`ADMOB_SETUP.md`** → 5 IDs chat me bhejo, baaki main kar dunga
 - 📘 Poori jaankari + kamai ka hisaab: **`EARNING_GUIDE.md`**
 - ⬜ App dobara build karo (neeche step 8 jaisa `bundleRelease`).
 

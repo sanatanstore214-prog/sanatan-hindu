@@ -57,7 +57,7 @@ parivaar samuh jaap · aaj ka aashirwad (WhatsApp).
 1. **AdMob account:** https://admob.google.com → bank/UPI + PAN + payment profile.
 2. **App add karo** (Android). Play par publish hone ke baad AdMob me app ko store listing se **link** karo.
 3. **4 ad units banao:** Banner (Adaptive), Interstitial, **Rewarded** (reward naam: `पुण्य अंक`, amount `1`), **App open**.
-4. **IDs daalo:**
+4. **IDs daalo** (click-by-click: `ADMOB_SETUP.md`; ek command se: `scripts/set_admob_ids.sh` — IDs check karke khud lagata hai):
    - `app/build.gradle` → `admobAppId` = aapka App ID (`ca-app-pub-XXXX~YYYY`)
    - `app/src/main/java/com/sanatanhindu/app/AdConfig.java` → charon unit IDs
 5. **Privacy & messaging** (AdMob) → **"European regulations (GDPR)"** message banao aur *Publish* karo (app ka UMP code isi ko dikhata hai).
