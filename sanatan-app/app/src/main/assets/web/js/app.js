@@ -1122,7 +1122,7 @@
       (Bridge.isPrivacyOptionsRequired() ? '<button class="set-row link-row" data-act="privacy-options"><span>🔒 विज्ञापन गोपनीयता विकल्प</span><span class="chev">›</span></button>' : '') +
       '<button class="set-row link-row" data-go="privacy"><span>📄 प्राइवेसी पॉलिसी</span><span class="chev">›</span></button></div>';
     h += '<div class="sec-label">पुण्य</div><div class="card-group"><button class="set-row link-row" data-act="punya-open"><span>🎁 दैनिक पुण्य</span><span class="chev">' + fmtNum(Punya.bonus()) + ' अंक ›</span></button></div>';
-    h += '<div class="sec-label">ऐप</div><div class="card-group"><button class="set-row link-row" data-act="share-app"><span>↗ ऐप शेयर करें</span><span class="chev">›</span></button><div class="set-row muted"><span>Bhakti Daily</span><span>v4.1</span></div></div>';
+    h += '<div class="sec-label">ऐप</div><div class="card-group"><button class="set-row link-row" data-act="share-app"><span>↗ ऐप शेयर करें</span><span class="chev">›</span></button><div class="set-row muted"><span>Bhakti Daily</span><span>v4.2</span></div></div>';
     h += '</div>';
     content.innerHTML = h; content.scrollTop = 0;
   }
@@ -1376,12 +1376,24 @@
   window.__ttsDone = function () { window._ttsOn = false; var b = document.getElementById("ttsBtn"); if (b) b.textContent = "🔊"; };
 
   function boot() {
-    applyAppearance();
-    Bridge.setAdsEnabled(!Store.isPremium());
-    var initial = Bridge.getInitialRoute();
-    if (initial) location.hash = "#/" + initial.replace(/^#?\/?/, "");
-    window.addEventListener("hashchange", render);
-    render();
+    var err = null;
+    try {
+      applyAppearance();
+      Bridge.setAdsEnabled(!Store.isPremium());
+      var initial = Bridge.getInitialRoute();
+      if (initial) location.hash = "#/" + initial.replace(/^#?\/?/, "");
+      window.addEventListener("hashchange", render);
+      render();
+    } catch (e) {
+      err = e;
+      try {
+        navEl.hidden = true;
+        content.innerHTML = '<div class="screen boot-err"><div class="boot-err-ico">🙏</div><h2>कुछ गड़बड़ हुई</h2>' +
+          '<p>ऐप को बंद करके दोबारा खोलें।</p><p class="boot-err-msg">' + esc(String((e && e.message) || e)) + '</p></div>';
+      } catch (x) {}
+    }
+    // Native ko batao: pehla screen ban gaya (ya kyun nahi bana)
+    Bridge.appReady(!err, err ? String((err && err.message) || err) + (err && err.stack ? " | " + String(err.stack).split("\n").slice(0, 3).join(" | ") : "") : "");
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();

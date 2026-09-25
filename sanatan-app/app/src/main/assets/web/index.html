@@ -4,7 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Bhakti Daily</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="css/app.css">
+  <script>
+    /* Boot guard: JS errors native app ko batao — kuch toote to khali screen ki jagah kaaran dikhe. */
+    (function () {
+      var sent = 0;
+      window.__bootErrors = [];
+      window.onerror = function (msg, src, line, col) {
+        var s = String(msg) + " @" + String(src || "").split("/").pop() + ":" + (line || 0) + ":" + (col || 0);
+        window.__bootErrors.push(s);
+        if (sent < 5) { sent++; try { if (window.Android && window.Android.reportError) window.Android.reportError(s); } catch (e) {} }
+        return false;
+      };
+    })();
+  </script>
 </head>
 <body>
   <header id="appHeader"></header>
@@ -17,6 +31,7 @@
     <button class="nav-btn" data-tab="meri" data-go="meri"><span class="nav-ico">🪷</span><span>मेरी</span></button>
   </nav>
 
+  <script src="js/emoji.js"></script>
   <script src="data/content.js"></script>
   <script src="js/store.js"></script>
   <script src="js/bridge.js"></script>

@@ -8,11 +8,15 @@ import android.content.ClipboardManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
@@ -23,8 +27,10 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Base64;
 import android.util.Log;
+import android.view.PixelCopy;
 import android.view.View;
 import android.webkit.JavascriptInterface;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -33,6 +39,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -41,6 +48,7 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.webkit.WebViewAssetLoader;
+import androidx.webkit.WebViewCompat;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
@@ -98,9 +106,30 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "BhaktiDaily";
     private static final int NOTIF_PERM_REQ = 1001;
+    /** WebViewAssetLoader ka domain. ZAROORI: loader isi domain ki request intercept karta hai —
+     *  pehle "appassets.androidx.org" likha tha jo loader ke default se match nahi hota tha, isliye
+     *  page kabhi load nahi hota aur har phone par screen khali dikhti thi. Google ka reserved domain
+     *  (androidplatform.net) kabhi asli internet par resolve nahi hota — isliye yahi use karo. */
+    private static final String ASSET_HOST = "appassets.androidplatform.net";
+    private static final String START_URL = "https://" + ASSET_HOST + "/assets/web/index.html";
+    /** Web UI itne der me "ready" na bole to khali screen ki jagah help panel dikhao. */
+    private static final long READY_TIMEOUT_MS = 15_000;
+    /** Splash kabhi atke nahi: page load ho gaya par ready signal na aaye tab bhi hatao. */
+    private static final long REVEAL_AFTER_LOAD_MS = 1_500;
+    private static final long REVEAL_HARD_MS = 6_000;
 
     private WebView webView;
     private FrameLayout adContainer;
+
+    // ---- startup safety (splash overlay, ready handshake, blank-screen self-heal) ----
+    private final Handler ui = new Handler(Looper.getMainLooper());
+    private View splash, diagPanel;
+    private TextView diagInfo;
+    private volatile boolean webReady = false;
+    private volatile String lastJsError = null;
+    private boolean swRender = false;
+    private final Runnable readyWatchdog = () -> { if (!webReady) showDiag("timeout"); };
+    private final Runnable revealRunnable = this::revealContent;
     private AdView bannerAd;
     private InterstitialAd interstitialAd;
     private int navCount = 0;
@@ -149,6 +178,10 @@ public class MainActivity extends AppCompatActivity {
 
         adContainer = findViewById(R.id.ad_container);
         webView = findViewById(R.id.webview);
+        splash = findViewById(R.id.splash);
+        diagPanel = findViewById(R.id.diag_panel);
+        diagInfo = findViewById(R.id.diag_info);
+        setupDiagPanel();
         applyNightAwareColors();
 
         adPrefs = getSharedPreferences("bhakti_ads", MODE_PRIVATE);
@@ -162,8 +195,8 @@ public class MainActivity extends AppCompatActivity {
 
         ReminderScheduler.createChannel(this);
         setupWebView();
-        webView.loadUrl("https://appassets.androidx.org/assets/web/index.html");
-        webView.postDelayed(this::revealContent, 4000);   // safety: splash kabhi atke nahi
+        webView.loadUrl(START_URL);
+        armStartupWatchdogs();
 
         gatherConsentThenInitAds();
         initTts();
@@ -180,6 +213,8 @@ public class MainActivity extends AppCompatActivity {
         int bg = Color.parseColor(isNight() ? "#120C08" : "#FBF3E4");
         if (webView != null) webView.setBackgroundColor(bg);
         if (adContainer != null) adContainer.setBackgroundColor(stripColor());
+        View root = findViewById(R.id.root);
+        if (root != null) root.setBackgroundColor(stripColor());
     }
 
     // ---------------- Edge-to-edge (Android 15/16) ----------------
@@ -197,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(bars.left, 0, bars.right, Math.max(bars.bottom, ime.bottom));
             // Keyboard khula ho to banner chhupao (text input ke paas ad = galti se click ka risk)
             boolean imeOpen = insets.isVisible(WindowInsetsCompat.Type.ime());
-            if (adContainer != null && revealed) adContainer.setVisibility(adsEnabled && !imeOpen ? View.VISIBLE : View.GONE);
+            if (adContainer != null && revealed) adContainer.setVisibility(adsEnabled && !imeOpen && !diagShowing ? View.VISIBLE : View.GONE);
             return WindowInsetsCompat.CONSUMED;
         });
         WindowInsetsControllerCompat c = WindowCompat.getInsetsController(getWindow(), root);
@@ -205,17 +240,152 @@ public class MainActivity extends AppCompatActivity {
         c.setAppearanceLightNavigationBars(!isNight()); // dark icons on light strip
     }
 
-    /** Splash (royal) -> web UI: tab dikhao jab page paint ho chuka ho. */
+    /** Splash (royal) -> web UI. WebView hamesha VISIBLE rehta hai (renderer bina ruke paint kare);
+     *  sirf upar ka native splash fade hota hai. */
     private boolean revealed = false;
+    private boolean diagShowing = false;
     private void revealContent() {
         if (revealed) return;
         revealed = true;
         runOnUiThread(() -> {
-            View root = findViewById(R.id.root);
-            if (root != null) root.setBackgroundColor(stripColor());
-            if (webView != null) { webView.setAlpha(0f); webView.setVisibility(View.VISIBLE); webView.animate().alpha(1f).setDuration(220).start(); }
-            if (adContainer != null) adContainer.setVisibility(adsEnabled ? View.VISIBLE : View.GONE);
+            if (splash != null && splash.getVisibility() == View.VISIBLE) {
+                splash.animate().cancel();
+                splash.animate().alpha(0f).setDuration(240)
+                        .withEndAction(() -> splash.setVisibility(View.GONE)).start();
+            }
+            if (adContainer != null) adContainer.setVisibility(adsEnabled && !diagShowing ? View.VISIBLE : View.GONE);
         });
+    }
+
+    // ---------------- Startup safety: ready handshake + help panel ----------------
+    private void armStartupWatchdogs() {
+        webReady = false;
+        ui.removeCallbacks(readyWatchdog);
+        ui.removeCallbacks(revealRunnable);
+        ui.postDelayed(revealRunnable, REVEAL_HARD_MS);
+        ui.postDelayed(readyWatchdog, READY_TIMEOUT_MS);
+    }
+
+    /** JS boot poora hua (ok=true) ya boot me error (ok=false, info=error). */
+    private void onWebReady(boolean ok, String info) {
+        if (!ok) {
+            if (info != null && info.length() > 0) lastJsError = info;
+            showDiag("boot");
+            return;
+        }
+        webReady = true;
+        Log.i(TAG, "web ready in " + (SystemClock.elapsedRealtime() - sessionStartAt) + " ms");
+        ui.removeCallbacks(readyWatchdog);
+        if (diagShowing) hideDiag();
+        if (adPrefs != null) adPrefs.edit().putInt("rp_gone", 0).apply();
+        ui.removeCallbacks(revealRunnable);
+        ui.postDelayed(revealRunnable, 120);                 // pehla frame paint hone do
+        ui.postDelayed(() -> checkRendered(0), 1_800);       // khali render ho to khud theek karo
+    }
+
+    private void setupDiagPanel() {
+        View b1 = findViewById(R.id.diag_update_webview);
+        View b2 = findViewById(R.id.diag_update_chrome);
+        View b3 = findViewById(R.id.diag_retry);
+        if (b1 != null) b1.setOnClickListener(v -> openStorePage("com.google.android.webview"));
+        if (b2 != null) b2.setOnClickListener(v -> openStorePage("com.android.chrome"));
+        if (b3 != null) b3.setOnClickListener(v -> retryLoad());
+    }
+
+    private void showDiag(String reason) {
+        runOnUiThread(() -> {
+            if (isFinishing()) return;
+            diagShowing = true;
+            Log.w(TAG, "startup problem: " + reason + " / " + lastJsError);
+            if (diagInfo != null) diagInfo.setText(diagText(reason));
+            if (diagPanel != null) diagPanel.setVisibility(View.VISIBLE);
+            if (adContainer != null) adContainer.setVisibility(View.GONE);   // error screen par ad nahi
+            revealed = true;
+            ui.removeCallbacks(revealRunnable);
+            if (splash != null) { splash.animate().cancel(); splash.setVisibility(View.GONE); }
+        });
+    }
+    private void hideDiag() {
+        diagShowing = false;
+        if (diagPanel != null) diagPanel.setVisibility(View.GONE);
+        if (adContainer != null && revealed) adContainer.setVisibility(adsEnabled ? View.VISIBLE : View.GONE);
+    }
+    private void retryLoad() {
+        hideDiag();
+        lastJsError = null;
+        if (webView == null) { recreate(); return; }      // renderer gaya tha: naya WebView
+        revealed = false;
+        if (splash != null) { splash.setAlpha(1f); splash.setVisibility(View.VISIBLE); }
+        webView.loadUrl(START_URL);
+        armStartupWatchdogs();
+    }
+    private void openStorePage(String pkg) {
+        try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg))); }
+        catch (Throwable t) {
+            try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + pkg))); }
+            catch (Throwable ignored) {}
+        }
+    }
+    /** WebView provider + version, jaise "com.google.android.webview 74.0.3729.185". */
+    private String webViewVersion() {
+        try {
+            PackageInfo pi = WebViewCompat.getCurrentWebViewPackage(this);
+            if (pi != null) return pi.packageName + " " + pi.versionName;
+        } catch (Throwable ignored) {}
+        return "unknown";
+    }
+    private String diagText(String reason) {
+        String ver = "?";
+        try { ver = getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Throwable ignored) {}
+        return "Bhakti Daily " + ver + " · Android " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")\n"
+                + Build.MANUFACTURER + " " + Build.MODEL + "\n"
+                + "WebView: " + webViewVersion() + (swRender ? " [sw]" : "") + "\n"
+                + "Reason: " + reason + (lastJsError != null ? "\nError: " + lastJsError : "");
+    }
+
+    // ---- Blank-screen self-heal: page "ready" hai par screen par kuch nahi bana (GPU/driver) ----
+    // PixelCopy se WebView ka chhota snapshot lo. Stage 0: khali mile to thoda ruk kar dobara dekho
+    // (dheema phone). Stage 1: ab bhi khali -> software rendering (isi WebView version ke liye yaad).
+    // Stage 2: tab bhi khali -> help panel.
+    private void checkRendered(final int stage) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || webView == null || !webReady || diagShowing || isFinishing()) return;
+        final int w = webView.getWidth(), h = webView.getHeight();
+        if (w < 60 || h < 60) return;
+        int[] loc = new int[2];
+        webView.getLocationInWindow(loc);
+        final Bitmap bmp = Bitmap.createBitmap(27, 48, Bitmap.Config.ARGB_8888);
+        try {
+            PixelCopy.request(getWindow(), new Rect(loc[0], loc[1], loc[0] + w, loc[1] + h), bmp, result -> {
+                boolean blank = result == PixelCopy.SUCCESS && isUniform(bmp);
+                bmp.recycle();
+                if (!blank) return;
+                if (stage == 0) {
+                    ui.postDelayed(() -> checkRendered(1), 2_500);
+                } else if (stage == 1 && !swRender) {
+                    Log.w(TAG, "blank render detected -> software layer");
+                    swRender = true;
+                    if (adPrefs != null) adPrefs.edit().putString("sw_render_for", webViewVersion()).apply();
+                    if (webView != null) { webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null); webView.invalidate(); }
+                    ui.postDelayed(() -> checkRendered(2), 1_500);
+                } else {
+                    lastJsError = "blank render";
+                    showDiag("blank");
+                }
+            }, ui);
+        } catch (Throwable t) { Log.w(TAG, "pixelcopy: " + t.getMessage()); }
+    }
+    private static boolean isUniform(Bitmap b) {
+        int minR = 255, minG = 255, minB = 255, maxR = 0, maxG = 0, maxB = 0;
+        for (int y = 0; y < b.getHeight(); y++) {
+            for (int x = 0; x < b.getWidth(); x++) {
+                int c = b.getPixel(x, y);
+                int r = Color.red(c), g = Color.green(c), bl = Color.blue(c);
+                if (r < minR) minR = r; if (r > maxR) maxR = r;
+                if (g < minG) minG = g; if (g > maxG) maxG = g;
+                if (bl < minB) minB = bl; if (bl > maxB) maxB = bl;
+            }
+        }
+        return (maxR - minR) < 14 && (maxG - minG) < 14 && (maxB - minB) < 14;
     }
 
     // ---------------- Back (predictive back, Android 16) ----------------
@@ -307,10 +477,17 @@ public class MainActivity extends AppCompatActivity {
     // ---------------- WebView ----------------
     private void setupWebView() {
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+                .setDomain(ASSET_HOST)
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .build();
 
         applyNightAwareColors();
+        if (BuildConfig.DEBUG) WebView.setWebContentsDebuggingEnabled(true);
+        // Isi WebView version par pehle khali render mila tha -> seedha software rendering
+        if (adPrefs != null && webViewVersion().equals(adPrefs.getString("sw_render_for", ""))) {
+            swRender = true;
+            webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        }
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -337,27 +514,57 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                return assetLoader.shouldInterceptRequest(request.getUrl());
+                WebResourceResponse r = assetLoader.shouldInterceptRequest(request.getUrl());
+                if (r == null && ASSET_HOST.equals(request.getUrl().getHost())) Log.w(TAG, "asset not intercepted: " + request.getUrl());
+                return r;
             }
             @Override
             public void onPageFinished(WebView view, String url) {
-                // ek frame baad dikhao taaki pehla paint ho chuka ho (no blank flash)
-                view.postDelayed(MainActivity.this::revealContent, 60);
+                // Asli reveal JS ke "ready" par hota hai; yeh sirf safety net hai.
+                if (!webReady && !revealed) {
+                    ui.removeCallbacks(revealRunnable);
+                    ui.postDelayed(revealRunnable, REVEAL_AFTER_LOAD_MS);
+                }
             }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
-                if ("appassets.androidx.org".equals(url.getHost())) return false;
+                if (ASSET_HOST.equals(url.getHost())) return false;
                 try { startActivity(new Intent(Intent.ACTION_VIEW, url)); } catch (Exception ignored) {}
                 return true;
             }
             @Override
             public void onReceivedError(WebView view, WebResourceRequest req, WebResourceError err) {
+                // (Pehle loadData() se error page banta tha — "#" wale rang ke kaaran woh khud khali dikhta tha.)
                 if (req.isForMainFrame()) {
-                    view.loadData("<html><body style='font-family:sans-serif;text-align:center;padding:40px;background:#FBF6EE;color:#8A2B1E'>"
-                            + "<h2>🚩 Bhakti Daily</h2><p>App load nahi ho paya. Dobara kholiye.</p></body></html>",
-                            "text/html; charset=utf-8", "UTF-8");
+                    lastJsError = "load " + err.getErrorCode() + " " + err.getDescription();
+                    showDiag("load");
                 }
+            }
+            @Override
+            public void onReceivedHttpError(WebView view, WebResourceRequest req, WebResourceResponse resp) {
+                if (req.isForMainFrame()) {
+                    lastJsError = "http " + resp.getStatusCode() + " " + req.getUrl().getPath();
+                    showDiag("load");
+                }
+            }
+            /** WebView renderer crash/kill par app band ya khali na ho: ek baar khud recreate, phir help panel. */
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                boolean crashed = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && detail != null && detail.didCrash();
+                lastJsError = crashed ? "renderer crashed" : "renderer killed (low memory)";
+                Log.w(TAG, lastJsError);
+                if (view == webView) {
+                    ViewGroup p = (ViewGroup) view.getParent();
+                    if (p != null) p.removeView(view);
+                    try { view.destroy(); } catch (Throwable ignored) {}
+                    webView = null;
+                }
+                int n = adPrefs != null ? adPrefs.getInt("rp_gone", 0) + 1 : 1;
+                if (adPrefs != null) adPrefs.edit().putInt("rp_gone", n).apply();
+                if (n <= 1) ui.post(MainActivity.this::recreate);
+                else showDiag("renderer");
+                return true;
             }
         });
     }
@@ -564,6 +771,16 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------- JS bridge ----------------
     private class AndroidBridge {
+        /** Web UI boot ho gaya (ok) ya boot me error aaya (ok=false, info=error text). */
+        @JavascriptInterface public void appReady(final boolean ok, final String info) {
+            ui.post(() -> onWebReady(ok, info));
+        }
+        /** window.onerror se aaye JS errors (help panel me dikhane ke liye). */
+        @JavascriptInterface public void reportError(String msg) {
+            if (msg == null) return;
+            Log.w(TAG, "js: " + msg);
+            lastJsError = msg.length() > 300 ? msg.substring(0, 300) : msg;
+        }
         /** Natural break (tab/screen badla) — har 3rd break par, time-gap ke saath. */
         @JavascriptInterface public void onNavigate() { runOnUiThread(() -> maybeShowInterstitial(false)); }
         /** Bada natural break (paath poora padha / mala poori) — count shart nahi, gap lagu. */
@@ -592,7 +809,7 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface public void setAdsEnabled(final boolean on) {
             runOnUiThread(() -> {
                 adsEnabled = on;
-                if (adContainer != null && revealed) adContainer.setVisibility(on ? View.VISIBLE : View.GONE);
+                if (adContainer != null && revealed) adContainer.setVisibility(on && !diagShowing ? View.VISIBLE : View.GONE);
                 if (on && bannerAd == null) loadBanner();
             });
         }
@@ -816,6 +1033,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override protected void onDestroy() {
+        ui.removeCallbacksAndMessages(null);
         if (fileCallback != null) { try { fileCallback.onReceiveValue(null); } catch (Throwable ignored) {} fileCallback = null; }
         if (bannerAd != null) bannerAd.destroy();
         try { if (tts != null) { tts.stop(); tts.shutdown(); } } catch (Throwable ignored) {}

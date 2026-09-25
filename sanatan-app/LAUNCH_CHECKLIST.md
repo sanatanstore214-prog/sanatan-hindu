@@ -3,7 +3,7 @@
 Ye **step-by-step** guide hai app ko Google Play par publish karke **kamai
 shuru** karne ke liye. Technical jaankari kam se kam rakhi hai. 🙏
 
-App abhi **ready + signed** hai (v4.1). Neeche jo ⬜ hai wo **aapko** karna hai
+App abhi **ready + signed** hai (v4.2). Neeche jo ⬜ hai wo **aapko** karna hai
 (zyada tar Google account/paisa wali cheezein — sirf aap kar sakte ho).
 
 ---
@@ -11,7 +11,8 @@ App abhi **ready + signed** hai (v4.1). Neeche jo ⬜ hai wo **aapko** karna hai
 ## 📦 0) Jo AB TAK ban chuka hai (ready)
 - ✅ **Google Play 2026 shart poori:** targetSdk **36** (Android 16), edge-to-edge + predictive back
 - ✅ **AdMob SDK 25.x** (2028 tak supported) + UMP consent
-- ✅ **Signed App Bundle** (Play upload ke liye): `app-release.aab` (v4.1, code 13)
+- ✅ **Signed App Bundle** (Play upload ke liye): `app-release.aab` (v4.2, code 14)
+- ✅ **v4.2 fix:** app khulte hi khali (blank) screen wala bug theek — Android 10 + purane WebView par asli test karke verify kiya
 - ✅ **Signed APK** (khud phone me test ke liye): `app-release.apk`
 - ✅ **Upload keystore**: `keystore/bhakti-upload.keystore` — *isko sambhaal kar rakho (neeche step 1)*
 - ✅ **Feature graphic** (1024x500) + **8 framed screenshots** (Play limit) — `store-assets/`
@@ -101,7 +102,7 @@ aur inhe click karna bhi safe hai). Asli kamai ke liye:
 - ⬜ Console → **Production** (pehli baar **Closed testing** recommend hai) → **Create release**.
 - ⬜ **Play App Signing** ko **on** rehne do (default).
 - ⬜ `app-release.aab` upload karo.
-- ⬜ Release notes daalo (`PLAY_LISTING.md` ka "What's new v4.1").
+- ⬜ Release notes daalo (`PLAY_LISTING.md` ka "What's new v4.2").
 - ⬜ **Review** → **Rollout**. Pehli review me **2-7 din** lag sakte hain.
 
 ---
@@ -123,8 +124,8 @@ Output:
 - AAB → `app/build/outputs/bundle/release/app-release.aab`
 - APK → `app/build/outputs/apk/release/app-release.apk`
 
-> Har nayi release me `app/build.gradle` me **versionCode +1** (abhi 13 → 14) aur
-> `versionName` badlo (abhi "4.1").
+> Har nayi release me `app/build.gradle` me **versionCode +1** (abhi 14 → 15) aur
+> `versionName` badlo (abhi "4.2").
 
 ---
 

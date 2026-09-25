@@ -14,6 +14,9 @@
   var Bridge = {
     isNative: function () { return !!A(); },
 
+    // Startup handshake: native splash tabhi hatta hai; na aaye to native help panel dikhata hai.
+    appReady: function (ok, info) { call("appReady", [!!ok, String(info || "")]); },
+
     // Ads (native paces everything: count + time-gap + session grace — see AdConfig.java)
     maybeInterstitial: function () { call("onNavigate"); },      // chhota natural break
     showInterstitial: function () { call("showInterstitial"); },  // bada natural break (paath/mala poora)

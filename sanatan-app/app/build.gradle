@@ -22,8 +22,8 @@ android {
         applicationId "com.sanatanhindu.app"
         minSdk 24   // AdMob 25.x requires 24 (Android 7.0+)
         targetSdk 36
-        versionCode 13
-        versionName "4.1"
+        versionCode 14
+        versionName "4.2"
 
         // AdMob App ID: release = ADMOB_APP_ID_REAL (upar). Debug build neeche TEST ID leta hai.
         // WARNING: release (real ads) wale app me apne hi ads par kabhi tap mat karna.

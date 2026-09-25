@@ -1,33 +1,139 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Edge-to-edge (Android 15/16): insets are applied in MainActivity.setupEdgeToEdge().
-     Root has no background so the royal launch screen shows until the web UI paints. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/root"
+     The WebView is ALWAYS visible so its renderer paints normally.
+     A native royal splash sits on top and fades out once the web UI reports it has rendered;
+     if the web UI never comes up, a native help panel (diag_panel) is shown instead of a blank screen. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/frame"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <!-- Status-bar area: royal maroon, matches the app header -->
+    <LinearLayout
+        android:id="@+id/root"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Status-bar area: royal maroon, matches the app header -->
+        <View
+            android:id="@+id/status_scrim"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:background="@color/royal_maroon" />
+
+        <FrameLayout
+            android:id="@+id/web_area"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <WebView
+                android:id="@+id/webview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <!-- Shown only if the web UI fails to start (old/disabled WebView, crash, blank render) -->
+            <ScrollView
+                android:id="@+id/diag_panel"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/cream"
+                android:fillViewport="true"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <ImageView
+                        android:layout_width="72dp"
+                        android:layout_height="72dp"
+                        android:layout_marginTop="8dp"
+                        android:contentDescription="@null"
+                        android:src="@mipmap/ic_launcher" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:gravity="center"
+                        android:text="@string/diag_title"
+                        android:textColor="@color/royal_maroon"
+                        android:textSize="21sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:lineSpacingExtra="4dp"
+                        android:text="@string/diag_body"
+                        android:textColor="@color/diag_text"
+                        android:textSize="15.5sp" />
+
+                    <Button
+                        android:id="@+id/diag_update_webview"
+                        style="@style/Widget.AppCompat.Button.Colored"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:text="@string/diag_update_webview"
+                        android:textAllCaps="false" />
+
+                    <Button
+                        android:id="@+id/diag_update_chrome"
+                        style="@style/Widget.AppCompat.Button.Colored"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/diag_update_chrome"
+                        android:textAllCaps="false" />
+
+                    <Button
+                        android:id="@+id/diag_retry"
+                        style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/diag_retry"
+                        android:textAllCaps="false"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/diag_info"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="18dp"
+                        android:fontFamily="monospace"
+                        android:textColor="@color/diag_muted"
+                        android:textIsSelectable="true"
+                        android:textSize="11.5sp" />
+                </LinearLayout>
+            </ScrollView>
+        </FrameLayout>
+
+        <!-- Banner ad. paddingTop keeps it visually separated from the bottom nav
+             buttons (AdMob accidental-click guidance). -->
+        <FrameLayout
+            android:id="@+id/ad_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="8dp"
+            android:visibility="invisible" />
+
+    </LinearLayout>
+
+    <!-- Royal launch screen overlay (same drawable as the window background, so no jump) -->
     <View
-        android:id="@+id/status_scrim"
+        android:id="@+id/splash"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:background="@color/royal_maroon" />
+        android:layout_height="match_parent"
+        android:background="@drawable/splash_bg"
+        android:clickable="true"
+        android:focusable="false"
+        android:importantForAccessibility="no" />
 
-    <WebView
-        android:id="@+id/webview"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:visibility="invisible" />
-
-    <!-- Banner ad. paddingTop keeps it visually separated from the bottom nav
-         buttons (AdMob accidental-click guidance). -->
-    <FrameLayout
-        android:id="@+id/ad_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="8dp"
-        android:visibility="invisible" />
-
-</LinearLayout>
+</FrameLayout>

@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Bhakti Daily</string>
+
+    <!-- Native help panel: shown only if the web UI could not start (instead of a blank screen) -->
+    <string name="diag_title">🙏 ऐप ठीक से खुल नहीं पाया</string>
+    <string name="diag_body">यह ऐप आपके फ़ोन के <b>Android System WebView</b> से चलता है। यह पुराना या बंद (disabled) हो तो स्क्रीन खाली दिखती है।\n\n<b>1.</b> नीचे के बटन से Play Store खोलकर <b>Android System WebView</b> और <b>Chrome</b> दोनों को <b>Update</b> करें (अगर “Enable” लिखा हो तो Enable करें)।\n<b>2.</b> फिर “दोबारा खोलें” दबाएँ।\n\nफिर भी न खुले तो इस स्क्रीन का स्क्रीनशॉट भेजें — नीचे की जानकारी से कारण पता चल जाएगा।</string>
+    <string name="diag_update_webview">⬆️ Android System WebView अपडेट करें</string>
+    <string name="diag_update_chrome">⬆️ Chrome अपडेट करें</string>
+    <string name="diag_retry">🔄 दोबारा खोलें</string>
 </resources>
