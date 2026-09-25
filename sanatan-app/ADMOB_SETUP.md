@@ -1,5 +1,11 @@
 # 🟢 AdMob Setup — 5 minute ka click-by-click
 
+> ### ✅ Status (25 Sep 2026)
+> - ✅ AdMob app **Bhakti Daily** + 4 ad units ban gaye (Banner, Interstitial, Rewarded, App open)
+> - ✅ IDs app me lag gaye (v4.1): **release/Play build = real ads**, **"Bhakti TEST" app = test ads**
+> - ✅ `store-assets/app-ads.txt` = `pub-4606541517815413`
+> - ⏳ Step 3 (Europe consent message) — **privacy policy URL** chahiye (`PRIVACY_POLICY.md` taiyaar hai)
+
 Ye kaam **aapke AdMob login** me hota hai (browser me). Jaisa likha hai waisa hi type karo.
 Ant me 5 IDs mujhe chat me bhej do — baaki sab (code, build, app-ads.txt) main kar dunga.
 

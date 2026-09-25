@@ -8,6 +8,11 @@ def kpf = rootProject.file("key.properties")
 def keystoreProps = new Properties()
 if (kpf.exists()) { keystoreProps.load(new FileInputStream(kpf)) }
 
+// AdMob App IDs — RELEASE (Play) = aapka REAL ID; DEBUG ("Bhakti TEST" app) = Google TEST ID.
+// REAL ID badalna ho to: scripts/set_admob_ids.sh
+def ADMOB_APP_ID_REAL = "ca-app-pub-4606541517815413~8619577182"
+def ADMOB_APP_ID_TEST = "ca-app-pub-3940256099942544~3347511713"
+
 android {
     namespace 'com.sanatanhindu.app'
     // Google Play: 31 Aug 2026 se naye apps/updates ko API 36 (Android 16) target karna zaroori.
@@ -17,20 +22,13 @@ android {
         applicationId "com.sanatanhindu.app"
         minSdk 24   // AdMob 25.x requires 24 (Android 7.0+)
         targetSdk 36
-        versionCode 12
-        versionName "4.0"
+        versionCode 13
+        versionName "4.1"
 
-        // ============================================================
-        // AdMob App ID — abhi GOOGLE TEST ID laga hai (safe).
-        // Apna real AdMob App ID yahan dalo jab account ban jaye:
-        //   1. https://admob.google.com par account banao (free)
-        //   2. App add karo -> "App ID" copy karo (ca-app-pub-XXXX~YYYY)
-        //   3. Niche wali line me test ID hatao, apni dalo.
-        // WARNING: Testing ke waqt apni real ID + apne phone se ad mat
-        // click karo, warna Google account ban kar dega.
-        // ============================================================
+        // AdMob App ID: release = ADMOB_APP_ID_REAL (upar). Debug build neeche TEST ID leta hai.
+        // WARNING: release (real ads) wale app me apne hi ads par kabhi tap mat karna.
         manifestPlaceholders = [
-            admobAppId: "ca-app-pub-3940256099942544~3347511713"
+            admobAppId: ADMOB_APP_ID_REAL
         ]
     }
 
@@ -45,7 +43,15 @@ android {
         }
     }
 
+    buildFeatures { buildConfig true }   // AdConfig: BuildConfig.DEBUG -> test ads
+
     buildTypes {
+        // "Bhakti TEST" — apne phone par test karne wala alag app: hamesha Google TEST ads.
+        debug {
+            applicationIdSuffix ".test"
+            versionNameSuffix "-test"
+            manifestPlaceholders = [admobAppId: ADMOB_APP_ID_TEST]
+        }
         release {
             if (kpf.exists()) signingConfig signingConfigs.release
             minifyEnabled false

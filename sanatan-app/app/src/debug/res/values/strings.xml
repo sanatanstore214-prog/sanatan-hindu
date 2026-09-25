@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Debug build = alag "TEST" app (Google test ads) — asli app se alag dikhe -->
+    <string name="app_name">Bhakti TEST</string>
+</resources>

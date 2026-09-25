@@ -674,3 +674,12 @@ body {
 .ob-times .chip { background: var(--surface); border: var(--card-line); color: var(--text); box-shadow: var(--shadow-sm); min-width: 42%; }
 .ob-times .chip:active { transform: scale(.97); background: var(--surface-2); }
 .modal-card > .pill.sm { margin-top: 12px; }
+
+/* ---- in-app privacy policy ---- */
+.policy { background: var(--surface); border: var(--card-line); border-radius: var(--radius); padding: 18px 16px; box-shadow: var(--shadow-sm); line-height: 1.65; font-size: 14.5px; overflow-wrap: anywhere; }
+.policy h1 { font-family: var(--display); font-weight: 400; font-size: 24px; margin: 0 0 4px; color: var(--maroon); }
+.policy h2 { font-size: 16px; margin: 18px 0 6px; color: var(--gold-deep); }
+.policy .pp-date { color: var(--muted); font-size: 12.5px; margin-top: 0; }
+.policy ul { padding-left: 20px; margin: 6px 0; } .policy li { margin: 4px 0; }
+.policy a { color: var(--saffron); }
+.policy hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }

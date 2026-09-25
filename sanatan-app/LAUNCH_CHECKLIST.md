@@ -3,7 +3,7 @@
 Ye **step-by-step** guide hai app ko Google Play par publish karke **kamai
 shuru** karne ke liye. Technical jaankari kam se kam rakhi hai. 🙏
 
-App abhi **ready + signed** hai (v4.0). Neeche jo ⬜ hai wo **aapko** karna hai
+App abhi **ready + signed** hai (v4.1). Neeche jo ⬜ hai wo **aapko** karna hai
 (zyada tar Google account/paisa wali cheezein — sirf aap kar sakte ho).
 
 ---
@@ -11,7 +11,7 @@ App abhi **ready + signed** hai (v4.0). Neeche jo ⬜ hai wo **aapko** karna hai
 ## 📦 0) Jo AB TAK ban chuka hai (ready)
 - ✅ **Google Play 2026 shart poori:** targetSdk **36** (Android 16), edge-to-edge + predictive back
 - ✅ **AdMob SDK 25.x** (2028 tak supported) + UMP consent
-- ✅ **Signed App Bundle** (Play upload ke liye): `app-release.aab` (v4.0, code 12)
+- ✅ **Signed App Bundle** (Play upload ke liye): `app-release.aab` (v4.1, code 13)
 - ✅ **Signed APK** (khud phone me test ke liye): `app-release.apk`
 - ✅ **Upload keystore**: `keystore/bhakti-upload.keystore` — *isko sambhaal kar rakho (neeche step 1)*
 - ✅ **Feature graphic** (1024x500) + **8 framed screenshots** (Play limit) — `store-assets/`
@@ -57,7 +57,9 @@ aur inhe click karna bhi safe hai). Asli kamai ke liye:
 - ⬜ **Ad Unit IDs** daalo: `app/src/main/java/.../AdConfig.java` (charon).
 - ⬜ AdMob → **Privacy & messaging** → "European regulations" message **Publish** karo (UMP consent).
 - ⬜ **app-ads.txt** apni website ke root par (`store-assets/app-ads.txt` template) — Play Console me wahi website.
-- 🟢 Click-by-click AdMob steps: **`ADMOB_SETUP.md`** → 5 IDs chat me bhejo, baaki main kar dunga
+- ✅ **AdMob app + 4 ad units bane, real IDs app me lag gaye (v4.1)** — `ADMOB_SETUP.md`
+- ⚠️ Apne phone par sirf **"Bhakti TEST"** app chalao (test ads). Play wale (real ads) app me apne ads par kabhi tap mat karna.
+- ⬜ Privacy policy ka public URL banao (`PRIVACY_POLICY.md`) → AdMob me daalo → Europe message **Publish**
 - 📘 Poori jaankari + kamai ka hisaab: **`EARNING_GUIDE.md`**
 - ⬜ App dobara build karo (neeche step 8 jaisa `bundleRelease`).
 
@@ -99,7 +101,7 @@ aur inhe click karna bhi safe hai). Asli kamai ke liye:
 - ⬜ Console → **Production** (pehli baar **Closed testing** recommend hai) → **Create release**.
 - ⬜ **Play App Signing** ko **on** rehne do (default).
 - ⬜ `app-release.aab` upload karo.
-- ⬜ Release notes daalo (`PLAY_LISTING.md` ka "What's new v4.0").
+- ⬜ Release notes daalo (`PLAY_LISTING.md` ka "What's new v4.1").
 - ⬜ **Review** → **Rollout**. Pehli review me **2-7 din** lag sakte hain.
 
 ---
@@ -121,8 +123,8 @@ Output:
 - AAB → `app/build/outputs/bundle/release/app-release.aab`
 - APK → `app/build/outputs/apk/release/app-release.apk`
 
-> Har nayi release me `app/build.gradle` me **versionCode +1** (abhi 12 → 13) aur
-> `versionName` badlo (abhi "4.0").
+> Har nayi release me `app/build.gradle` me **versionCode +1** (abhi 13 → 14) aur
+> `versionName` badlo (abhi "4.1").
 
 ---
 

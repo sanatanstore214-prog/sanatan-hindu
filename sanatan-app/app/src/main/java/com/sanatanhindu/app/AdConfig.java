@@ -3,24 +3,38 @@ package com.sanatanhindu.app;
 /**
  * Bhakti Daily — centralized AdMob configuration (earning engine).
  *
- * Abhi GOOGLE ke OFFICIAL TEST IDs lage hain (safe — inse paisa nahi aata).
- * Asli kamai ke liye (EARNING_GUIDE.md dekho):
- *   1. https://admob.google.com par app banao -> App ID + 4 Ad Unit IDs lo
- *      (Banner, Interstitial, Rewarded, App open).
- *   2. build.gradle me manifestPlaceholders -> admobAppId = apna App ID.
- *   3. Niche charon *_AD_UNIT_ID apni real IDs se badlo.
- * WARNING: real IDs lagne ke baad apne hi ad par click MAT karo (account ban).
+ * DO BUILD, DO KAAM:
+ *   - RELEASE build (.aab, Google Play)  -> aapke REAL AdMob IDs (kamai).
+ *   - DEBUG build ("Bhakti TEST" app)     -> hamesha Google TEST ads, apne phone par
+ *     bina darr ke test karne ke liye. (Apne hi REAL ad par tap = account ban ka risk.)
  *
- * Format -> kamai (India, approx): Rewarded > App open ~ Interstitial > Banner.
+ * REAL IDs badalne hain? scripts/set_admob_ids.sh chalao (IDs check karke yahan likhta hai).
+ * App ID build.gradle me hai (ADMOB_APP_ID_REAL).
+ *
+ * Format -> kamai (India, approx): Rewarded > Interstitial > App open > Banner.
  */
 public final class AdConfig {
     private AdConfig() {}
 
-    // ---- Ad unit IDs (TEST — replace with your own) ----
-    public static final String BANNER_AD_UNIT_ID       = "ca-app-pub-3940256099942544/9214589741"; // adaptive banner
-    public static final String INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712";
-    public static final String REWARDED_AD_UNIT_ID     = "ca-app-pub-3940256099942544/5224354917";
-    public static final String APP_OPEN_AD_UNIT_ID     = "ca-app-pub-3940256099942544/9257395921";
+    /** Debug build me sirf test ads. */
+    private static final boolean TEST_ADS = BuildConfig.DEBUG;
+
+    // ---- REAL ad unit IDs (release / Google Play) — AdMob app "Bhakti Daily" ----
+    static final String REAL_BANNER_AD_UNIT_ID       = "ca-app-pub-4606541517815413/9602495526";
+    static final String REAL_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-4606541517815413/4126807561";
+    static final String REAL_REWARDED_AD_UNIT_ID     = "ca-app-pub-4606541517815413/1500644223";
+    static final String REAL_APP_OPEN_AD_UNIT_ID     = "ca-app-pub-4606541517815413/6561399218";
+
+    // ---- Google official TEST IDs (debug build) ----
+    private static final String TEST_BANNER       = "ca-app-pub-3940256099942544/9214589741"; // adaptive banner
+    private static final String TEST_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712";
+    private static final String TEST_REWARDED     = "ca-app-pub-3940256099942544/5224354917";
+    private static final String TEST_APP_OPEN     = "ca-app-pub-3940256099942544/9257395921";
+
+    public static final String BANNER_AD_UNIT_ID       = TEST_ADS ? TEST_BANNER       : REAL_BANNER_AD_UNIT_ID;
+    public static final String INTERSTITIAL_AD_UNIT_ID = TEST_ADS ? TEST_INTERSTITIAL : REAL_INTERSTITIAL_AD_UNIT_ID;
+    public static final String REWARDED_AD_UNIT_ID     = TEST_ADS ? TEST_REWARDED     : REAL_REWARDED_AD_UNIT_ID;
+    public static final String APP_OPEN_AD_UNIT_ID     = TEST_ADS ? TEST_APP_OPEN     : REAL_APP_OPEN_AD_UNIT_ID;
 
     // ---- Interstitial pacing (AdMob policy: only at natural breaks, not too often) ----
     /** Itne natural breaks (paath khatam, mala poori, tab badla) ke baad ek interstitial. */

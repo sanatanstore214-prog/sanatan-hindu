@@ -1,4 +1,4 @@
 # app-ads.txt for Bhakti Daily — host at the ROOT of your developer website
 # (e.g. https://yoursite.com/app-ads.txt) and put the same site in Play Console.
 # Replace pub-XXXXXXXXXXXXXXXX with your AdMob publisher ID (AdMob -> Settings -> Account information).
-google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+google.com, pub-4606541517815413, DIRECT, f08c47fec0942fa0

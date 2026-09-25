@@ -10,7 +10,8 @@
 # What it does:
 #   - checks every ID's format and that all 5 belong to the SAME AdMob account
 #   - refuses Google's test IDs (they never earn money)
-#   - patches app/build.gradle (admobAppId) + AdConfig.java (4 unit IDs)
+#   - patches app/build.gradle (ADMOB_APP_ID_REAL) + AdConfig.java (4 REAL_* unit IDs);
+#     the debug "Bhakti TEST" build keeps Google test ads
 #   - writes store-assets/app-ads.txt with your publisher ID (derived from APP_ID)
 #   - builds the signed release .aab + .apk (unless --no-build / --dry-run)
 set -euo pipefail
@@ -49,23 +50,27 @@ echo "✓ Sab IDs sahi format me, ek hi account (pub-$PUB)"
 
 if [ "$DRY" = 1 ]; then
   echo "— dry run: ye badlav honge —"
-  echo "  $GRADLE : admobAppId -> $APP"
+  echo "  $GRADLE : ADMOB_APP_ID_REAL -> $APP"
   echo "  $ADCFG  : BANNER=$BANNER INTERSTITIAL=$INTER REWARDED=$REWARD APP_OPEN=$OPEN"
   echo "  $ADSTXT : google.com, pub-$PUB, DIRECT, f08c47fec0942fa0"
   exit 0
 fi
 
-sed -i -E "s#admobAppId: \"[^\"]*\"#admobAppId: \"$APP\"#" "$GRADLE"
-sed -i -E "s#(BANNER_AD_UNIT_ID[[:space:]]*=[[:space:]]*)\"[^\"]*\"#\1\"$BANNER\"#"             "$ADCFG"
-sed -i -E "s#(INTERSTITIAL_AD_UNIT_ID[[:space:]]*=[[:space:]]*)\"[^\"]*\"#\1\"$INTER\"#"        "$ADCFG"
-sed -i -E "s#(REWARDED_AD_UNIT_ID[[:space:]]*=[[:space:]]*)\"[^\"]*\"#\1\"$REWARD\"#"          "$ADCFG"
-sed -i -E "s#(APP_OPEN_AD_UNIT_ID[[:space:]]*=[[:space:]]*)\"[^\"]*\"#\1\"$OPEN\"#"            "$ADCFG"
+# Sirf REAL (release) values badalte hain; debug build ke Google TEST IDs jaise hain waise rehte hain.
+sed -i -E "s#(def ADMOB_APP_ID_REAL[[:space:]]*=[[:space:]]*)\"[^\"]*\"#\1\"$APP\"#" "$GRADLE"
+sed -i -E "s#(REAL_BANNER_AD_UNIT_ID[[:space:]]*=[[:space:]]*)\"[^\"]*\"#\1\"$BANNER\"#"             "$ADCFG"
+sed -i -E "s#(REAL_INTERSTITIAL_AD_UNIT_ID[[:space:]]*=[[:space:]]*)\"[^\"]*\"#\1\"$INTER\"#"        "$ADCFG"
+sed -i -E "s#(REAL_REWARDED_AD_UNIT_ID[[:space:]]*=[[:space:]]*)\"[^\"]*\"#\1\"$REWARD\"#"          "$ADCFG"
+sed -i -E "s#(REAL_APP_OPEN_AD_UNIT_ID[[:space:]]*=[[:space:]]*)\"[^\"]*\"#\1\"$OPEN\"#"            "$ADCFG"
 sed -i -E "s#^google\.com, pub-[0-9X]+, DIRECT, f08c47fec0942fa0#google.com, pub-$PUB, DIRECT, f08c47fec0942fa0#" "$ADSTXT"
 
 # verify every patch actually landed (sed is silent when nothing matches)
-grep -q "admobAppId: \"$APP\"" "$GRADLE"     || fail "build.gradle patch nahi hua"
-for id in "$BANNER" "$INTER" "$REWARD" "$OPEN"; do grep -q "\"$id\"" "$ADCFG" || fail "AdConfig.java me $id nahi laga"; done
-! grep -q "$TEST_PUB" "$ADCFG" "$GRADLE"         || fail "Kahin test ID abhi bhi baaki hai"
+grep -q "ADMOB_APP_ID_REAL = \"$APP\"" "$GRADLE" || fail "build.gradle patch nahi hua"
+for pair in "BANNER:$BANNER" "INTERSTITIAL:$INTER" "REWARDED:$REWARD" "APP_OPEN:$OPEN"; do
+  n="${pair%%:*}"; id="${pair#*:}"
+  grep -E "REAL_${n}_AD_UNIT_ID" "$ADCFG" | grep -q "\"$id\"" || fail "AdConfig.java me REAL_${n} par $id nahi laga"
+done
+! grep -E "REAL_[A-Z_]+_AD_UNIT_ID|def ADMOB_APP_ID_REAL" "$ADCFG" "$GRADLE" | grep -q "$TEST_PUB" || fail "REAL (release) me abhi bhi test ID baaki hai"
 grep -q "pub-$PUB" "$ADSTXT"                     || fail "app-ads.txt patch nahi hua"
 echo "✓ build.gradle, AdConfig.java, app-ads.txt update ho gaye"
 
