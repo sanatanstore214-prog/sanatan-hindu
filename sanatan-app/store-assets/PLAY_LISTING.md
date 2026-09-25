@@ -57,6 +57,9 @@ bhakti status, god status, mahadev status, dp maker, good morning god,
 status maker, insta story, whatsapp status hindu,
 photo dp maker, bhagwan dp, naam wala status, daily reward, punya
 
+## Privacy policy URL (Play Console → App content + Store listing)
+https://docs.google.com/document/d/e/2PACX-1vTKdl20eFsGi8rpn3Rn7oW_FwF6iXiVpaO1-WX6EKpx7PHMw65tMMEV3Br_KfoA-JeJQ7imUrH9FO1e/pub
+
 ## Category
 Lifestyle (or Books & Reference)
 

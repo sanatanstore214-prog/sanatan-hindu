@@ -62,7 +62,7 @@ Use these when filling the **Data safety** section in Play Console.
 | AD_ID (auto by AdMob) | Personalised/measured ads |
 
 ## Pre-launch checklist
-- [ ] Privacy Policy URL set (host PRIVACY_POLICY.md publicly)
+- [ ] Privacy Policy URL set in Play Console: https://docs.google.com/document/d/e/2PACX-1vTKdl20eFsGi8rpn3Rn7oW_FwF6iXiVpaO1-WX6EKpx7PHMw65tMMEV3Br_KfoA-JeJQ7imUrH9FO1e/pub (already public; same text as PRIVACY_POLICY.md)
 - [ ] Data safety form filled as above
 - [ ] Ads declaration = "Yes, contains ads"
 - [ ] Target audience / content rating questionnaire

@@ -4,7 +4,9 @@
 > - ✅ AdMob app **Bhakti Daily** + 4 ad units ban gaye (Banner, Interstitial, Rewarded, App open)
 > - ✅ IDs app me lag gaye (v4.1): **release/Play build = real ads**, **"Bhakti TEST" app = test ads**
 > - ✅ `store-assets/app-ads.txt` = `pub-4606541517815413`
-> - ⏳ Step 3 (Europe consent message) — **privacy policy URL** chahiye (`PRIVACY_POLICY.md` taiyaar hai)
+> - ✅ Step 3: privacy policy URL AdMob me set (https://docs.google.com/document/d/e/2PACX-1vTKdl20eFsGi8rpn3Rn7oW_FwF6iXiVpaO1-WX6EKpx7PHMw65tMMEV3Br_KfoA-JeJQ7imUrH9FO1e/pub)
+>   + Europe message **"Bhakti Daily - GDPR"** Published & On (buttons: Consent + Manage options)
+> - ⬜ Step 4 (Payments/PAN/bank) — sirf aap
 
 Ye kaam **aapke AdMob login** me hota hai (browser me). Jaisa likha hai waisa hi type karo.
 Ant me 5 IDs mujhe chat me bhej do — baaki sab (code, build, app-ads.txt) main kar dunga.

@@ -19,7 +19,8 @@ App abhi **ready + signed** hai (v4.2). Neeche jo ⬜ hai wo **aapko** karna hai
 - ✅ **App icon** 512x512 — `store-assets/playstore-icon-512.png`
 - ✅ **Store listing text** (title, description, keywords) — `store-assets/PLAY_LISTING.md`
 - ✅ **Data Safety** answers — `store-assets/DATA_SAFETY.md`
-- ✅ **Privacy Policy** — `PRIVACY_POLICY.md`
+- ✅ **Privacy Policy** — online (Google Doc, published): https://docs.google.com/document/d/e/2PACX-1vTKdl20eFsGi8rpn3Rn7oW_FwF6iXiVpaO1-WX6EKpx7PHMw65tMMEV3Br_KfoA-JeJQ7imUrH9FO1e/pub
+  (app ke andar bhi: Settings → 📄 प्राइवेसी पॉलिसी; text = `PRIVACY_POLICY.md`)
 
 > Ye APK/AAB/keystore file git me **commit NAHI** hote (safety). Main inhe
 > aapko chat me alag se bhej raha hoon (download kar lena).
@@ -48,32 +49,26 @@ nahi kar paoge**. Isliye:
 
 ---
 
-## 💰 3) AdMob (kamai ka source) — REAL IDs daalo
-Abhi app me **Google ke TEST ad IDs** lage hain (safe — inse kamai nahi hoti,
-aur inhe click karna bhi safe hai). Asli kamai ke liye:
-- ⬜ **https://admob.google.com** par account banao (free). Bank/UPI + PAN chahiye (payout ke liye).
-- ⬜ App add karo → **App ID** milega (`ca-app-pub-XXXX~YYYY`).
-- ⬜ **4 ad units** banao: Banner (Adaptive), Interstitial, **Rewarded** (reward `पुण्य अंक`, 1), **App open** → har ek ka **Ad Unit ID** (`ca-app-pub-XXXX/ZZZZ`).
-- ⬜ **App ID** daalo: `app/build.gradle` me `admobAppId` wali line.
-- ⬜ **Ad Unit IDs** daalo: `app/src/main/java/.../AdConfig.java` (charon).
-- ⬜ AdMob → **Privacy & messaging** → "European regulations" message **Publish** karo (UMP consent).
-- ⬜ **app-ads.txt** apni website ke root par (`store-assets/app-ads.txt` template) — Play Console me wahi website.
-- ✅ **AdMob app + 4 ad units bane, real IDs app me lag gaye (v4.1)** — `ADMOB_SETUP.md`
+## 💰 3) AdMob (kamai ka source)
+- ✅ AdMob account + app **Bhakti Daily** + 4 ad units (Banner, Interstitial, Rewarded, App open)
+- ✅ Real IDs app me lag gaye: **Play/release build = asli ads**, **"Bhakti TEST" = Google test ads** — `ADMOB_SETUP.md`
+- ✅ Privacy policy URL AdMob me set + Europe consent message **"Bhakti Daily - GDPR" Published & On** (25 Sep 2026)
+- ⬜ **Payments** (naam, pata, PAN, bank) — sirf aap bharo; ~$100 hone par payout.
+- ⬜ **app-ads.txt** apni website ke root par (`store-assets/app-ads.txt`) — Play Console me wahi website.
 - ⚠️ Apne phone par sirf **"Bhakti TEST"** app chalao (test ads). Play wale (real ads) app me apne ads par kabhi tap mat karna.
-- ⬜ Privacy policy ka public URL banao (`PRIVACY_POLICY.md`) → AdMob me daalo → Europe message **Publish**
 - 📘 Poori jaankari + kamai ka hisaab: **`EARNING_GUIDE.md`**
-- ⬜ App dobara build karo (neeche step 8 jaisa `bundleRelease`).
 
 > ⚠️ **Apne hi ads par khud click MAT karo** aur testing me apni real ID +
 > apne phone se click mat karo — Google account ban kar sakta hai.
 
 ---
 
-## 🌐 4) Privacy Policy online host karo (Play ke liye zaroori)
-- ⬜ `PRIVACY_POLICY.md` ka text kisi free page par daalo:
-  - Sabse aasan: GitHub Pages (is repo me `web/` folder hai), ya
-    **https://telegra.ph** / Google Sites / Notion public page.
-- ⬜ Us page ka **URL copy** karo — Play Console me "Privacy Policy" me paste karoge.
+## 🌐 4) Privacy Policy online — ✅ HO GAYA
+- ✅ Published Google Doc (text `PRIVACY_POLICY.md` se hubahu same):
+  **https://docs.google.com/document/d/e/2PACX-1vTKdl20eFsGi8rpn3Rn7oW_FwF6iXiVpaO1-WX6EKpx7PHMw65tMMEV3Br_KfoA-JeJQ7imUrH9FO1e/pub**
+- Yahi URL Play Console me daalna hai (step 5 aur 6).
+- ⚠️ Policy kabhi badlo to **teeno jagah** same rakho: `PRIVACY_POLICY.md` → `python3 scripts/build_privacy.py`
+  (app ke andar wali copy) → Google Doc me wahi text.
 
 ---
 
@@ -83,12 +78,12 @@ aur inhe click karna bhi safe hai). Asli kamai ke liye:
   - ⬜ App name, Short description, Full description
   - ⬜ App icon (512x512), Feature graphic (1024x500)
   - ⬜ Phone screenshots (`store-assets/screenshots/` ki 8 files upload karo (`extra/` nahi))
-  - ⬜ Category: **Lifestyle** (ya Books & Reference), Email + Privacy Policy URL
+  - ⬜ Category: **Lifestyle** (ya Books & Reference), Email + Privacy Policy URL (step 4 wala link)
 
 ---
 
 ## 📋 6) Policy forms (Console → "App content")
-- ⬜ **Privacy policy** URL daalo (step 4)
+- ⬜ **Privacy policy** URL daalo: https://docs.google.com/document/d/e/2PACX-1vTKdl20eFsGi8rpn3Rn7oW_FwF6iXiVpaO1-WX6EKpx7PHMw65tMMEV3Br_KfoA-JeJQ7imUrH9FO1e/pub
 - ⬜ **Ads**: "Yes, my app contains ads"
 - ⬜ **Data safety**: `store-assets/DATA_SAFETY.md` ke hisaab se bharo
       (Advertising ID = Yes; Group Jaap on kiya to Name + jaap count bhi)
